@@ -1,0 +1,295 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/database-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  TENANT
+  LANDLORD
+  ADMIN
+}
+
+enum PropertyStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  RENTED
+}
+
+enum PropertyType {
+  APARTMENT
+  HOUSE
+  VILLA
+  STUDIO
+  LOFT
+  DORMITORY
+  OFFICE
+  COMMERCIAL
+}
+
+enum ListingStatus {
+  ACTIVE
+  INACTIVE
+  SOLD
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  REJECTED
+  CANCELLED
+  COMPLETED
+  RESCHEDULED
+}
+
+enum MessageStatus {
+  SENT
+  DELIVERED
+  READ
+}
+
+enum ComplaintStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
+}
+
+enum RentPeriod {
+  MONTHLY
+  QUARTERLY
+  YEARLY
+  DAILY
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  password      String?
+  image         String?
+  phone         String?
+  role          UserRole  @default(TENANT)
+  isActive      Boolean   @default(true)
+  bio           String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  properties    Property[]
+  bookingsAsLandlord Booking[] @relation("LandlordBookings")
+  bookingsAsTenant Booking[] @relation("TenantBookings")
+  reviewsAsTenant Review[] @relation("TenantReviews")
+  favorites     Favorite[]
+  sentMessages  Message[] @relation("SentMessages")
+  receivedMessages Message[] @relation("ReceivedMessages")
+  complaintsFiled Complaint[] @relation("FiledComplaints")
+  complaintsReceived Complaint[] @relation("ReceivedComplaints")
+  complaintsHandled Complaint[] @relation("HandledComplaints")
+  accounts      Account[]
+  sessions      Session[]
+
+  @@map("users")
+}
+
+model Property {
+  id            String    @id @default(cuid())
+  title         String
+  description   String
+  price         Decimal   @db.Decimal(12, 2)
+  rentPeriod    RentPeriod @default(MONTHLY)
+  deposit       Decimal?  @db.Decimal(12, 2)
+  area          Float
+  bedrooms      Int
+  bathrooms     Int
+  floor         Int?
+  totalFloors   Int?
+  orientation   String?
+  type          PropertyType
+  furnished     Boolean   @default(false)
+  hasParking    Boolean   @default(false)
+  hasElevator   Boolean   @default(false)
+  hasBalcony    Boolean   @default(false)
+  hasGarden     Boolean   @default(false)
+  hasPool       Boolean   @default(false)
+  hasGym        Boolean   @default(false)
+  petsAllowed   Boolean   @default(false)
+  smokingAllowed Boolean  @default(false)
+  address       String
+  city          String
+  district      String
+  province      String
+  zipCode       String?
+  latitude      Decimal?  @db.Decimal(10, 8)
+  longitude     Decimal?  @db.Decimal(11, 8)
+  images        Json
+  videoUrl      String?
+  virtualTourUrl String?
+  status        PropertyStatus @default(PENDING)
+  listingStatus ListingStatus @default(ACTIVE)
+  isFeatured    Boolean   @default(false)
+  availableFrom DateTime?
+  minimumStay   Int?      @default(1)
+  maximumStay   Int?
+  landlordId    String
+  landlord      User      @relation(fields: [landlordId], references: [id])
+  bookings      Booking[]
+  reviews       Review[]
+  messages      Message[]
+  complaints    Complaint[]
+  favorites     Favorite[]
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([city, district])
+  @@index([price])
+  @@index([status])
+  @@index([landlordId])
+  @@map("properties")
+}
+
+model Booking {
+  id            String    @id @default(cuid())
+  propertyId    String
+  property      Property  @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  tenantId      String
+  tenant        User      @relation("TenantBookings", fields: [tenantId], references: [id])
+  landlordId    String
+  landlord      User      @relation("LandlordBookings", fields: [landlordId], references: [id])
+  preferredDate DateTime
+  preferredTime String
+  alternateDate DateTime?
+  alternateTime String?
+  message       String?
+  numberOfPeople Int?
+  status        BookingStatus @default(PENDING)
+  rejectionReason String?
+  rescheduleNote String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([propertyId])
+  @@index([tenantId])
+  @@index([landlordId])
+  @@index([status])
+  @@map("bookings")
+}
+
+model Message {
+  id            String    @id @default(cuid())
+  senderId      String
+  sender        User      @relation("SentMessages", fields: [senderId], references: [id])
+  receiverId    String
+  receiver      User      @relation("ReceivedMessages", fields: [receiverId], references: [id])
+  propertyId    String?
+  property      Property? @relation(fields: [propertyId], references: [id])
+  content       String
+  status        MessageStatus @default(SENT)
+  isRead        Boolean   @default(false)
+  createdAt     DateTime  @default(now())
+
+  @@index([senderId, receiverId])
+  @@index([receiverId, isRead])
+  @@map("messages")
+}
+
+model Review {
+  id            String    @id @default(cuid())
+  propertyId    String
+  property      Property  @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  tenantId      String
+  tenant        User      @relation("TenantReviews", fields: [tenantId], references: [id])
+  rating        Int       @db.SmallInt
+  cleanliness   Int?      @db.SmallInt
+  location      Int?      @db.SmallInt
+  communication Int?     @db.SmallInt
+  value         Int?      @db.SmallInt
+  comment       String?
+  createdAt     DateTime  @default(now())
+
+  @@index([propertyId])
+  @@index([tenantId])
+  @@unique([propertyId, tenantId])
+  @@map("reviews")
+}
+
+model Complaint {
+  id            String    @id @default(cuid())
+  title         String
+  description   String
+  type          String
+  propertyId    String?
+  property      Property? @relation(fields: [propertyId], references: [id])
+  complainantId String
+  complainant   User      @relation("FiledComplaints", fields: [complainantId], references: [id])
+  respondentId  String?
+  respondent    User?     @relation("ReceivedComplaints", fields: [respondentId], references: [id])
+  handlerId     String?
+  handler       User?     @relation("HandledComplaints", fields: [handlerId], references: [id])
+  status        ComplaintStatus @default(OPEN)
+  priority      String?
+  resolution    String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([status])
+  @@index([complainantId])
+  @@map("complaints")
+}
+
+model Favorite {
+  id            String    @id @default(cuid())
+  userId        String
+  user          User      @relation(fields: [userId], references: [id])
+  propertyId    String
+  property      Property  @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  createdAt     DateTime  @default(now())
+
+  @@unique([userId, propertyId])
+  @@map("favorites")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
