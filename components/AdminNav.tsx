@@ -42,29 +42,3 @@ export default function AdminNav() {
     </nav>
   );
 }
-            const isActive =
-              pathname === item.href ||
-              (item.href !== "/admin/dashboard" &&
-                pathname.startsWith(item.href));
-
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={cn(
-                  "flex items-center px-4 py-2.5 rounded-lg font-medium text-sm transition-all",
-                  isActive
-                    ? "bg-blue-50 text-blue-600"
-                    : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
-                )}
-              >
-                <Icon className="w-4 h-4 mr-2" />
-                {item.label}
-              </Link>
-            );
-          })}
-        </div>
-      </div>
-    </nav>
-  );
-}

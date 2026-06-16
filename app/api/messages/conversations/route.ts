@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
-import { db } from "@/lib/prisma";
+import db from "@/lib/prisma";
 import { requireAuth } from "@/lib/session";
 import type { Conversation } from "@/types";
+import { FULL_USER_SELECT, parsePropertyImages } from "@/lib/api-helpers";
 
 export async function GET(request: Request) {
   try {
@@ -17,31 +18,12 @@ export async function GET(request: Request) {
       orderBy: { createdAt: "desc" },
       include: {
         sender: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            phone: true,
-            image: true,
-          },
+          select: FULL_USER_SELECT,
         },
         receiver: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            phone: true,
-            image: true,
-          },
+          select: FULL_USER_SELECT,
         },
-        property: {
-          select: {
-            id: true,
-            title: true,
-            price: true,
-            images: true,
-          },
-        },
+        property: true,
       },
     });
 
@@ -62,12 +44,16 @@ export async function GET(request: Request) {
             (m.propertyId || "default") === propertyId
         ).length;
 
+        let processedProperty = message.property
+          ? parsePropertyImages(message.property)
+          : undefined;
+
         conversationMap.set(conversationKey, {
           id: conversationKey,
-          participant: otherUser,
-          lastMessage: message,
+          participant: otherUser as any,
+          lastMessage: message as any,
           unreadCount,
-          property: message.property || undefined,
+          property: processedProperty as any,
         });
       }
     }

@@ -10,7 +10,9 @@ import LoadingSpinner from "@/components/LoadingSpinner";
 import { getInitials } from "@/lib/utils";
 
 export default function TenantProfilePage() {
-  const { data: session, update } = useSession();
+  const sessionResult = useSession();
+  const session = sessionResult?.data;
+  const update = sessionResult?.update;
   const [user, setUser] = useState<UserType | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);

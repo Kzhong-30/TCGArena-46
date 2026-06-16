@@ -1,8 +1,14 @@
 import { NextResponse } from "next/server";
-import { db } from "@/lib/prisma";
+import db from "@/lib/prisma";
 import { requireAuth } from "@/lib/session";
-import { MessageStatus } from "@prisma/client";
 import type { MessageFormData, MessageWithDetails, PaginatedResponse } from "@/types";
+import { FULL_USER_SELECT, parsePropertyImages } from "@/lib/api-helpers";
+
+const MESSAGE_STATUS = {
+  SENT: "SENT",
+  DELIVERED: "DELIVERED",
+  READ: "READ",
+} as const;
 
 export async function GET(request: Request) {
   try {
@@ -41,27 +47,12 @@ export async function GET(request: Request) {
         take: limit,
         include: {
           sender: {
-            select: {
-              id: true,
-              name: true,
-              image: true,
-            },
+            select: FULL_USER_SELECT,
           },
           receiver: {
-            select: {
-              id: true,
-              name: true,
-              image: true,
-            },
+            select: FULL_USER_SELECT,
           },
-          property: {
-            select: {
-              id: true,
-              title: true,
-              price: true,
-              images: true,
-            },
-          },
+          property: true,
         },
       }),
       db.message.count({ where }),
@@ -78,15 +69,25 @@ export async function GET(request: Request) {
         },
         data: {
           isRead: true,
-          status: MessageStatus.READ,
+          status: MESSAGE_STATUS.READ,
         },
       });
     }
 
+    const processedMessages = messages.map((m) => {
+      if (m.property) {
+        return {
+          ...m,
+          property: parsePropertyImages(m.property),
+        };
+      }
+      return m;
+    });
+
     const totalPages = Math.ceil(total / limit);
 
-    const response: PaginatedResponse<MessageWithDetails> = {
-      data: messages,
+    const response = {
+      data: processedMessages,
       total,
       page,
       limit,
@@ -174,37 +175,30 @@ export async function POST(request: Request) {
         receiverId,
         propertyId,
         content: content.trim(),
-        status: MessageStatus.SENT,
+        status: MESSAGE_STATUS.SENT,
       },
       include: {
         sender: {
-          select: {
-            id: true,
-            name: true,
-            image: true,
-          },
+          select: FULL_USER_SELECT,
         },
         receiver: {
-          select: {
-            id: true,
-            name: true,
-            image: true,
-          },
+          select: FULL_USER_SELECT,
         },
-        property: {
-          select: {
-            id: true,
-            title: true,
-            price: true,
-            images: true,
-          },
-        },
+        property: true,
       },
     });
 
+    let processedMessage = message as any;
+    if (message.property) {
+      processedMessage = {
+        ...message,
+        property: parsePropertyImages(message.property),
+      };
+    }
+
     return NextResponse.json({
       success: true,
-      data: message,
+      data: processedMessage,
       message: "消息发送成功",
     });
   } catch (error) {

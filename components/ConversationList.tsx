@@ -82,7 +82,7 @@ export default function ConversationList({
       <div className="flex-1 overflow-y-auto">
         {filteredConversations.length === 0 ? (
           <EmptyState
-            icon={<MessageSquare className="w-16 h-16 text-gray-300" />}
+            icon="MessageSquare"
             title="暂无对话"
             description={
               searchQuery

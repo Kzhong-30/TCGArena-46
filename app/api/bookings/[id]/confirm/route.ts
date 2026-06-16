@@ -1,7 +1,16 @@
 import { NextResponse } from "next/server";
-import { db } from "@/lib/prisma";
+import db from "@/lib/prisma";
 import { requireAuth } from "@/lib/session";
-import { BookingStatus } from "@prisma/client";
+import { FULL_USER_SELECT, parsePropertyImages } from "@/lib/api-helpers";
+
+const BOOKING_STATUS = {
+  PENDING: "PENDING",
+  CONFIRMED: "CONFIRMED",
+  REJECTED: "REJECTED",
+  CANCELLED: "CANCELLED",
+  COMPLETED: "COMPLETED",
+  RESCHEDULED: "RESCHEDULED",
+} as const;
 
 export async function PUT(request: Request, { params }: { params: { id: string } }) {
   try {
@@ -37,7 +46,7 @@ export async function PUT(request: Request, { params }: { params: { id: string }
       );
     }
 
-    if (booking.status !== BookingStatus.PENDING) {
+    if (booking.status !== BOOKING_STATUS.PENDING) {
       return NextResponse.json(
         {
           success: false,
@@ -50,44 +59,33 @@ export async function PUT(request: Request, { params }: { params: { id: string }
     const updatedBooking = await db.booking.update({
       where: { id },
       data: {
-        status: BookingStatus.CONFIRMED,
+        status: BOOKING_STATUS.CONFIRMED,
       },
       include: {
         property: {
           include: {
             landlord: {
-              select: {
-                id: true,
-                name: true,
-                image: true,
-              },
+              select: FULL_USER_SELECT,
             },
           },
         },
         tenant: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            phone: true,
-            image: true,
-          },
+          select: FULL_USER_SELECT,
         },
         landlord: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            phone: true,
-            image: true,
-          },
+          select: FULL_USER_SELECT,
         },
       },
     });
 
+    const processedBooking = {
+      ...updatedBooking,
+      property: parsePropertyImages(updatedBooking.property),
+    };
+
     return NextResponse.json({
       success: true,
-      data: updatedBooking,
+      data: processedBooking,
       message: "预约确认成功",
     });
   } catch (error) {

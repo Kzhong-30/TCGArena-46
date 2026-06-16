@@ -10,42 +10,36 @@ export default withAuth(
       return NextResponse.redirect(new URL("/", req.url));
     }
 
-    if (pathname.startsWith("/landlord") && token?.role !== "LANDLORD" && token?.role !== "ADMIN") {
-      return NextResponse.redirect(new URL("/login?callbackUrl=" + pathname, req.url));
+    if (
+      pathname.startsWith("/landlord") &&
+      token?.role !== "LANDLORD" &&
+      token?.role !== "ADMIN"
+    ) {
+      return NextResponse.redirect(new URL("/", req.url));
     }
 
     if (pathname.startsWith("/tenant") && !token) {
-      return NextResponse.redirect(new URL("/login?callbackUrl=" + pathname, req.url));
+      return NextResponse.redirect(new URL("/", req.url));
     }
 
     if (pathname.startsWith("/messages") && !token) {
-      return NextResponse.redirect(new URL("/login?callbackUrl=" + pathname, req.url));
+      return NextResponse.redirect(new URL("/", req.url));
     }
 
     return NextResponse.next();
   },
   {
     callbacks: {
-      authorized: ({ req, token }) => {
-        const pathname = req.nextUrl.pathname;
-        if (
-          pathname.startsWith("/_next") ||
-          pathname.startsWith("/api/auth") ||
-          pathname === "/login" ||
-          pathname === "/register" ||
-          pathname === "/" ||
-          pathname.startsWith("/properties") ||
-          pathname.startsWith("/images") ||
-          pathname === "/favicon.ico"
-        ) {
-          return true;
-        }
-        return !!token;
-      },
+      authorized: ({ token }) => !!token,
     },
   }
 );
 
 export const config = {
-  matcher: ["/((?!.*\\..*|_next).*)", "/", "/(api|trpc)(.*)"],
+  matcher: [
+    "/admin/:path*",
+    "/landlord/:path*",
+    "/tenant/:path*",
+    "/messages/:path*",
+  ],
 };

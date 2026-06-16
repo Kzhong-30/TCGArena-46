@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { signIn, useSession } from "next-auth/react";
 import { useForm } from "react-hook-form";
@@ -10,6 +10,7 @@ import { Eye, EyeOff, Loader2, Home } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import LoadingSpinner from "@/components/LoadingSpinner";
 
 const loginSchema = z.object({
   email: z.string().email("请输入有效的邮箱地址"),
@@ -18,19 +19,12 @@ const loginSchema = z.object({
 
 type LoginFormData = z.infer<typeof loginSchema>;
 
-export default function LoginPage() {
+function LoginPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { data: session } = useSession();
+  const sessionResult = useSession();
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-
-  const callbackUrl = searchParams.get("callbackUrl") || "/properties";
-
-  if (session) {
-    router.push(callbackUrl);
-    return null;
-  }
 
   const {
     register,
@@ -43,6 +37,15 @@ export default function LoginPage() {
       password: "",
     },
   });
+
+  const callbackUrl = searchParams.get("callbackUrl") || "/properties";
+  const session = sessionResult?.data;
+
+  useEffect(() => {
+    if (session) {
+      router.push(callbackUrl);
+    }
+  }, [session, router, callbackUrl]);
 
   const onSubmit = async (data: LoginFormData) => {
     setIsLoading(true);
@@ -67,6 +70,14 @@ export default function LoginPage() {
       setIsLoading(false);
     }
   };
+
+  if (session) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <LoadingSpinner />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
@@ -207,5 +218,13 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<LoadingSpinner />}>
+      <LoginPageContent />
+    </Suspense>
   );
 }

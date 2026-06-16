@@ -5,6 +5,10 @@ import ConversationList from "@/components/ConversationList";
 import { MessageSquare } from "lucide-react";
 import EmptyState from "@/components/EmptyState";
 import type { Conversation, MessageWithDetails, User } from "@/types";
+import { parseImages } from "@/lib/utils";
+
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export const metadata = {
   title: "消息 - 城市租房平台",
@@ -49,7 +53,7 @@ async function getConversations(userId: string): Promise<Conversation[]> {
 
   const conversationMap = new Map<string, Conversation>();
 
-  for (const message of messages as (MessageWithDetails & {
+  for (const message of messages as unknown as (MessageWithDetails & {
     sender: User;
     receiver: User;
   })[]) {
@@ -67,12 +71,19 @@ async function getConversations(userId: string): Promise<Conversation[]> {
           (m.propertyId || "default") === propertyId
       ).length;
 
+      const processedProperty = message.property
+        ? {
+            ...message.property,
+            images: parseImages(message.property.images as unknown as string | null),
+          }
+        : undefined;
+
       conversationMap.set(conversationKey, {
         id: conversationKey,
         participant: otherUser,
         lastMessage: message,
         unreadCount,
-        property: message.property || undefined,
+        property: processedProperty,
       });
     }
   }
@@ -119,7 +130,7 @@ export default async function MessagesPage() {
               </div>
               <div className="flex-1 flex items-center justify-center min-h-[500px]">
                 <EmptyState
-                  icon={<MessageSquare className="w-16 h-16 text-gray-300" />}
+                  icon="MessageSquare"
                   title="选择一个对话开始聊天"
                   description="从左侧列表中选择一个对话，开始与房东或租客交流"
                 />

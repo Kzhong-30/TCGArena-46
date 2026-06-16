@@ -23,7 +23,7 @@ interface FavoriteWithDetails extends Favorite {
 }
 
 export default function TenantFavoritesPage() {
-  const { data: session } = useSession();
+  const { data: session } = useSession() ?? {};
   const [favorites, setFavorites] = useState<FavoriteWithDetails[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -122,7 +122,7 @@ export default function TenantFavoritesPage() {
               className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-lg transition-all group"
             >
               <div className="relative">
-                {favorite.property.images && Array.isArray(favorite.property.images) && favorite.property.images.length > 0 ? (
+                {favorite.property.images.length > 0 ? (
                   <img
                     src={favorite.property.images[0]}
                     alt={favorite.property.title}

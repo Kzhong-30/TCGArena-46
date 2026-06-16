@@ -15,6 +15,7 @@ import { formatCurrency, formatRelativeTime } from "@/lib/utils";
 import Link from "next/link";
 
 export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export default async function LandlordDashboardPage() {
   const user = await requireRole(["LANDLORD", "ADMIN"]);
@@ -66,7 +67,7 @@ export default async function LandlordDashboardPage() {
     recentProperties,
   ] = stats;
 
-  const totalActiveValue = activeStats._sum.price?.toNumber() || 0;
+  const totalActiveValue = Number(activeStats._sum.price) || 0;
   const activePropertiesCount = activeStats._count;
 
   const bookingStats = [
@@ -301,7 +302,7 @@ export default async function LandlordDashboardPage() {
                   className="flex items-center p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
                 >
                   <div className="w-16 h-12 bg-gray-200 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden">
-                    {Array.isArray(property.images) && property.images.length > 0 ? (
+                    {property.images.length > 0 ? (
                       <img
                         src={property.images[0]}
                         alt={property.title}

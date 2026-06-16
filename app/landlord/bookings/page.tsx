@@ -29,7 +29,7 @@ interface BookingWithDetails extends Booking {
 }
 
 export default function LandlordBookingsPage() {
-  const { data: session } = useSession();
+  const { data: session } = useSession() ?? {};
   const [bookings, setBookings] = useState<BookingWithDetails[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -246,7 +246,7 @@ export default function LandlordBookingsPage() {
 
       {filteredBookings.length === 0 ? (
         <EmptyState
-          icon={Calendar}
+          icon="Calendar"
           title="暂无预约"
           description={
             searchQuery || statusFilter !== "ALL"

@@ -1,8 +1,17 @@
 import { NextResponse } from "next/server";
-import { db } from "@/lib/prisma";
+import db from "@/lib/prisma";
 import { requireAuth } from "@/lib/session";
-import { BookingStatus } from "@prisma/client";
 import type { ReviewFormData, ReviewWithDetails } from "@/types";
+import { FULL_USER_SELECT, parsePropertyImages } from "@/lib/api-helpers";
+
+const BOOKING_STATUS = {
+  PENDING: "PENDING",
+  CONFIRMED: "CONFIRMED",
+  REJECTED: "REJECTED",
+  CANCELLED: "CANCELLED",
+  COMPLETED: "COMPLETED",
+  RESCHEDULED: "RESCHEDULED",
+} as const;
 
 export async function POST(request: Request) {
   try {
@@ -92,7 +101,7 @@ export async function POST(request: Request) {
       where: {
         propertyId,
         tenantId: user.id,
-        status: BookingStatus.COMPLETED,
+        status: BOOKING_STATUS.COMPLETED,
       },
     });
 
@@ -138,29 +147,25 @@ export async function POST(request: Request) {
         property: {
           include: {
             landlord: {
-              select: {
-                id: true,
-                name: true,
-                image: true,
-              },
+              select: FULL_USER_SELECT,
             },
           },
         },
         tenant: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            phone: true,
-            image: true,
-          },
+          select: FULL_USER_SELECT,
         },
       },
     });
 
+    const processedReview = {
+      ...review,
+      property: parsePropertyImages(review.property),
+      tenant: review.tenant,
+    };
+
     return NextResponse.json({
       success: true,
-      data: review as ReviewWithDetails,
+      data: processedReview,
       message: "评价提交成功",
     });
   } catch (error) {

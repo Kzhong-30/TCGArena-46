@@ -29,7 +29,7 @@ import EmptyState from "@/components/EmptyState";
 import LoadingSpinner from "@/components/LoadingSpinner";
 
 export default function LandlordPropertiesPage() {
-  const { data: session } = useSession();
+  const { data: session } = useSession() ?? {};
   const [properties, setProperties] = useState<Property[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -186,21 +186,16 @@ export default function LandlordPropertiesPage() {
 
       {filteredProperties.length === 0 ? (
         <EmptyState
-          icon={Home}
+          icon="Home"
           title="暂无房源"
           description={searchQuery || statusFilter !== "ALL" || listingFilter !== "ALL" 
             ? "没有找到符合条件的房源" 
             : "您还没有发布任何房源，点击上方按钮发布您的第一个房源"}
           action={
-            !searchQuery && statusFilter === "ALL" && listingFilter === "ALL" ? (
-              <Link
-                href="/landlord/properties/create"
-                className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
-              >
-                <PlusCircle className="w-4 h-4 mr-2" />
-                发布房源
-              </Link>
-            ) : undefined
+            !searchQuery && statusFilter === "ALL" && listingFilter === "ALL" ? {
+              label: "发布房源",
+              href: "/landlord/properties/create",
+            } : undefined
           }
         />
       ) : (
@@ -212,7 +207,7 @@ export default function LandlordPropertiesPage() {
             >
               <div className="flex flex-col md:flex-row">
                 <div className="w-full md:w-64 h-48 md:h-auto relative bg-gray-100 flex-shrink-0">
-                  {Array.isArray(property.images) && property.images.length > 0 ? (
+                  {property.images.length > 0 ? (
                     <img
                       src={property.images[0]}
                       alt={property.title}

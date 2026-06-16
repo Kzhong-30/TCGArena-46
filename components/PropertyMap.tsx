@@ -73,8 +73,8 @@ export default function PropertyMap({
 
     if (validProperties.length === 0) return undefined;
 
-    const latitudes = validProperties.map((p) => p.latitude as number);
-    const longitudes = validProperties.map((p) => p.longitude as number);
+    const latitudes = validProperties.map((p) => Number(p.latitude));
+    const longitudes = validProperties.map((p) => Number(p.longitude));
 
     const minLat = Math.min(...latitudes);
     const maxLat = Math.max(...latitudes);
@@ -140,7 +140,7 @@ export default function PropertyMap({
         {validProperties.map((property) => (
           <Marker
             key={property.id}
-            position={[property.latitude as number, property.longitude as number]}
+            position={[Number(property.latitude), Number(property.longitude)]}
             icon={createPriceIcon(property.price)}
           >
             <Popup maxWidth={350} minWidth={350}>

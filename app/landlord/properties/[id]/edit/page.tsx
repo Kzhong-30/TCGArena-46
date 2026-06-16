@@ -4,6 +4,8 @@ import { notFound, redirect } from "next/navigation";
 import PropertyWizard from "@/components/PropertyWizard";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
+import { parseImages } from "@/lib/utils";
+import type { PropertyFormData } from "@/types";
 
 export const dynamic = "force-dynamic";
 
@@ -26,10 +28,10 @@ export default async function EditPropertyPage({ params }: EditPropertyPageProps
     redirect("/landlord/properties");
   }
 
-  const initialData = {
+  const initialData: Partial<PropertyFormData> = {
     title: property.title,
     description: property.description,
-    type: property.type,
+    type: property.type as any,
     area: property.area,
     bedrooms: property.bedrooms,
     bathrooms: property.bathrooms,
@@ -50,12 +52,12 @@ export default async function EditPropertyPage({ params }: EditPropertyPageProps
     district: property.district,
     province: property.province,
     zipCode: property.zipCode || "",
-    latitude: property.latitude?.toNumber() || undefined,
-    longitude: property.longitude?.toNumber() || undefined,
-    price: property.price.toNumber(),
-    rentPeriod: property.rentPeriod,
-    deposit: property.deposit?.toNumber() || undefined,
-    images: Array.isArray(property.images) ? property.images : [],
+    latitude: property.latitude ? Number(property.latitude) : undefined,
+    longitude: property.longitude ? Number(property.longitude) : undefined,
+    price: Number(property.price),
+    rentPeriod: property.rentPeriod as any,
+    deposit: property.deposit ? Number(property.deposit) : undefined,
+    images: parseImages(property.images as string | null),
     videoUrl: property.videoUrl || "",
     virtualTourUrl: property.virtualTourUrl || "",
     availableFrom: property.availableFrom

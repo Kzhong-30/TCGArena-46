@@ -18,7 +18,7 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 
 export default function Navbar() {
-  const { data: session } = useSession();
+  const { data: session } = useSession() ?? {};
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
 

@@ -84,3 +84,24 @@ export function extractNumber(str: string) {
   const match = str.match(/\d+/);
   return match ? parseInt(match[0], 10) : null;
 }
+
+export function parseImages(imagesStr: string | null | undefined): string[] {
+  if (!imagesStr) return [];
+  try {
+    const parsed = JSON.parse(imagesStr);
+    if (Array.isArray(parsed)) {
+      return parsed.filter((item) => typeof item === 'string');
+    }
+    return [];
+  } catch {
+    return [];
+  }
+}
+
+export function serializeImages(images: string[]): string {
+  return JSON.stringify(images);
+}
+
+export function isValidEnumValue<T extends string>(value: string, validValues: T[]): value is T {
+  return validValues.includes(value as T);
+}

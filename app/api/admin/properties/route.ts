@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
-import { db } from "@/lib/prisma";
+import db from "@/lib/prisma";
 import { requireRole } from "@/lib/session";
-import { PropertyStatus } from "@prisma/client";
 import type { PaginatedResponse, PropertyWithDetails } from "@/types";
+import { FULL_USER_SELECT, parsePropertiesImages } from "@/lib/api-helpers";
 
 export async function GET(request: Request) {
   try {
@@ -42,22 +42,12 @@ export async function GET(request: Request) {
         take: limit,
         include: {
           landlord: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-              phone: true,
-              image: true,
-            },
+            select: FULL_USER_SELECT,
           },
           reviews: {
             include: {
               tenant: {
-                select: {
-                  id: true,
-                  name: true,
-                  image: true,
-                },
+                select: FULL_USER_SELECT,
               },
             },
           },
@@ -73,10 +63,21 @@ export async function GET(request: Request) {
       db.property.count({ where }),
     ]);
 
+    const processedProperties = properties.map((p) => {
+      const parsed = parsePropertiesImages([p])[0];
+      return {
+        ...parsed,
+        reviews: p.reviews.map((r) => ({
+          ...r,
+          tenant: r.tenant,
+        })),
+      };
+    });
+
     const totalPages = Math.ceil(total / limit);
 
-    const response: PaginatedResponse<PropertyWithDetails> = {
-      data: properties,
+    const response = {
+      data: processedProperties,
       total,
       page,
       limit,

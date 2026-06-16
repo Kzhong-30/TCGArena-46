@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
-import { db } from "@/lib/prisma";
+import db from "@/lib/prisma";
 import { requireAuth } from "@/lib/session";
 import { validatePhone } from "@/lib/utils";
+import { FULL_USER_SELECT } from "@/lib/api-helpers";
 
 export async function GET() {
   try {
@@ -9,17 +10,7 @@ export async function GET() {
 
     const userData = await db.user.findUnique({
       where: { id: user.id },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        phone: true,
-        image: true,
-        bio: true,
-        role: true,
-        createdAt: true,
-        updatedAt: true,
-      },
+      select: FULL_USER_SELECT,
     });
 
     if (!userData) {
@@ -83,17 +74,7 @@ export async function PATCH(request: Request) {
     const updatedUser = await db.user.update({
       where: { id: user.id },
       data: updateData,
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        phone: true,
-        image: true,
-        bio: true,
-        role: true,
-        createdAt: true,
-        updatedAt: true,
-      },
+      select: FULL_USER_SELECT,
     });
 
     return NextResponse.json({

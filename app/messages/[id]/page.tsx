@@ -1,12 +1,17 @@
 import { redirect } from "next/navigation";
 import { getCurrentUser, requireAuth } from "@/lib/session";
 import { db } from "@/lib/prisma";
-import { MessageStatus } from "@prisma/client";
 import ConversationList from "@/components/ConversationList";
 import ChatContainer from "@/components/ChatContainer";
-import { ArrowLeft, Home } from "lucide-react";
+import MessageBubble from "@/components/MessageBubble";
+import MessageInput from "@/components/MessageInput";
+import { ArrowLeft, Home, MessageSquare } from "lucide-react";
 import Link from "next/link";
 import type { MessageWithDetails, User } from "@/types";
+import { parseImages } from "@/lib/utils";
+
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export const metadata = {
   title: "对话详情 - 城市租房平台",
@@ -68,16 +73,26 @@ async function getMessages(
       },
       data: {
         isRead: true,
-        status: MessageStatus.READ,
+        status: "READ",
       },
     });
   }
 
-  return messages as MessageWithDetails[];
+  const processedMessages = messages.map((msg) => ({
+    ...msg,
+    property: msg.property
+      ? {
+          ...msg.property,
+          images: parseImages(msg.property.images as string | null),
+        }
+      : undefined,
+  }));
+
+  return processedMessages as unknown as MessageWithDetails[];
 }
 
 async function getOtherUser(otherUserId: string): Promise<User | null> {
-  return db.user.findUnique({
+  const result = await db.user.findUnique({
     where: { id: otherUserId },
     select: {
       id: true,
@@ -87,6 +102,7 @@ async function getOtherUser(otherUserId: string): Promise<User | null> {
       role: true,
     },
   });
+  return result as unknown as User | null;
 }
 
 async function getProperty(propertyId: string) {
@@ -143,6 +159,7 @@ export default async function ConversationPage({
   }
 
   const actualPropertyId = propertyId !== "default" ? propertyId : undefined;
+  const propertyImages = property ? parseImages(property.images as string | null) : [];
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -195,13 +212,11 @@ export default async function ConversationPage({
                     href={`/properties/${property.id}`}
                     className="mt-3 flex items-center gap-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
                   >
-                    {property.images &&
-                    Array.isArray(property.images) &&
-                    property.images.length > 0 ? (
+                    {propertyImages.length > 0 ? (
                       <div className="w-12 h-12 rounded-lg overflow-hidden flex-shrink-0">
                         <img
-                          src={property.images[0]}
-                          alt={property.title}
+                          src={propertyImages[0]}
+                          alt={property!.title}
                           className="w-full h-full object-cover"
                         />
                       </div>
@@ -215,7 +230,7 @@ export default async function ConversationPage({
                         {property.title}
                       </p>
                       <p className="text-sm text-blue-600">
-                        ¥{property.price?.toNumber?.() || property.price}/月
+                        ¥{property.price}/月
                       </p>
                     </div>
                   </Link>
@@ -264,83 +279,6 @@ export default async function ConversationPage({
           </div>
         </div>
       </div>
-    </div>
-  );
-}
-                  <div className="space-y-1">
-                    {messages.map((message, index) => {
-                      const isCurrentUser = message.senderId === user.id;
-                      const prevMessage = messages[index - 1];
-                      const showAvatar =
-                        !prevMessage ||
-                        prevMessage.senderId !== message.senderId;
-
-                      return (
-                        <MessageBubble
-                          key={message.id}
-                          message={message}
-                          isCurrentUser={isCurrentUser}
-                          showAvatar={showAvatar}
-                        />
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-
-              <MessageInput
-                receiverId={otherUserId}
-                propertyId={actualPropertyId}
-                onMessageSent={() => {}}
-              />
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-                      const isCurrentUser = message.senderId === user.id;
-                      const prevMessage = messages[index - 1];
-                      const showAvatar =
-                        !prevMessage ||
-                        prevMessage.senderId !== message.senderId;
-
-                      return (
-                        <MessageBubble
-                          key={message.id}
-                          message={message}
-                          isCurrentUser={isCurrentUser}
-                          showAvatar={showAvatar}
-                        />
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-
-              <MessageInput
-                receiverId={otherUserId}
-                propertyId={actualPropertyId}
-                onMessageSent={() => {}}
-              />
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <script
-        dangerouslySetInnerHTML={{
-          __html: `
-            (function() {
-              var container = document.querySelector('.overflow-y-auto.p-4');
-              if (container) {
-                container.scrollTop = container.scrollHeight;
-              }
-            })();
-          `,
-        }}
-      />
     </div>
   );
 }

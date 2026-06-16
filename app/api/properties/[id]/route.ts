@@ -1,8 +1,21 @@
 import { NextResponse } from "next/server";
-import { db } from "@/lib/prisma";
+import db from "@/lib/prisma";
 import { getCurrentUser, requireAuth } from "@/lib/session";
-import { PropertyStatus, ListingStatus } from "@prisma/client";
 import type { PropertyFormData, PropertyWithDetails } from "@/types";
+import { FULL_USER_SELECT, parsePropertyImages, stringifyImages } from "@/lib/api-helpers";
+
+const PROPERTY_STATUS = {
+  PENDING: "PENDING",
+  APPROVED: "APPROVED",
+  REJECTED: "REJECTED",
+  RENTED: "RENTED",
+} as const;
+
+const LISTING_STATUS = {
+  ACTIVE: "ACTIVE",
+  INACTIVE: "INACTIVE",
+  SOLD: "SOLD",
+} as const;
 
 export async function GET(request: Request, { params }: { params: { id: string } }) {
   try {
@@ -28,11 +41,11 @@ export async function GET(request: Request, { params }: { params: { id: string }
       }
 
       if (currentUser?.role === "LANDLORD" && property.landlordId !== currentUser.id) {
-        where.status = PropertyStatus.APPROVED;
-        where.listingStatus = ListingStatus.ACTIVE;
+        where.status = PROPERTY_STATUS.APPROVED;
+        where.listingStatus = LISTING_STATUS.ACTIVE;
       } else if (!currentUser || currentUser.role === "TENANT") {
-        where.status = PropertyStatus.APPROVED;
-        where.listingStatus = ListingStatus.ACTIVE;
+        where.status = PROPERTY_STATUS.APPROVED;
+        where.listingStatus = LISTING_STATUS.ACTIVE;
       }
     }
 
@@ -40,23 +53,12 @@ export async function GET(request: Request, { params }: { params: { id: string }
       where,
       include: {
         landlord: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            phone: true,
-            image: true,
-            bio: true,
-          },
+          select: FULL_USER_SELECT,
         },
         reviews: {
           include: {
             tenant: {
-              select: {
-                id: true,
-                name: true,
-                image: true,
-              },
+              select: FULL_USER_SELECT,
             },
           },
           orderBy: {
@@ -67,11 +69,7 @@ export async function GET(request: Request, { params }: { params: { id: string }
           where: currentUser?.role === "LANDLORD" || currentUser?.role === "ADMIN" ? {} : { tenantId: currentUser?.id },
           include: {
             tenant: {
-              select: {
-                id: true,
-                name: true,
-                image: true,
-              },
+              select: FULL_USER_SELECT,
             },
           },
         },
@@ -106,12 +104,27 @@ export async function GET(request: Request, { params }: { params: { id: string }
       isFavorite = !!favorite;
     }
 
+    const processedProperty = parsePropertyImages(property);
+    const processedReviews = property.reviews.map((r) => ({
+      ...r,
+      tenant: r.tenant,
+    }));
+    const processedBookings = property.bookings.map((b) => ({
+      ...b,
+      tenant: b.tenant,
+    }));
+
+    const result = {
+      ...processedProperty,
+      reviews: processedReviews,
+      bookings: processedBookings,
+      _count: property._count,
+      isFavorite,
+    };
+
     return NextResponse.json({
       success: true,
-      data: {
-        ...property,
-        isFavorite,
-      } as PropertyWithDetails & { isFavorite: boolean },
+      data: result,
     });
   } catch (error) {
     console.error("Error fetching property:", error);
@@ -178,8 +191,12 @@ export async function PUT(request: Request, { params }: { params: { id: string }
 
     const updateData: any = { ...body };
 
+    if (body.images !== undefined) {
+      updateData.images = stringifyImages(body.images);
+    }
+
     if (user.role !== "ADMIN" && existingProperty.status !== "PENDING") {
-      updateData.status = PropertyStatus.PENDING;
+      updateData.status = PROPERTY_STATUS.PENDING;
     }
 
     const property = await db.property.update({
@@ -187,13 +204,7 @@ export async function PUT(request: Request, { params }: { params: { id: string }
       data: updateData,
       include: {
         landlord: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            phone: true,
-            image: true,
-          },
+          select: FULL_USER_SELECT,
         },
         reviews: true,
         _count: {
@@ -206,9 +217,11 @@ export async function PUT(request: Request, { params }: { params: { id: string }
       },
     });
 
+    const processedProperty = parsePropertyImages(property);
+
     return NextResponse.json({
       success: true,
-      data: property,
+      data: processedProperty,
       message: user.role === "ADMIN" ? "房源更新成功" : "房源更新成功，等待重新审核",
     });
   } catch (error) {

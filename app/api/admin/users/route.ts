@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
-import { db } from "@/lib/prisma";
+import db from "@/lib/prisma";
 import { requireRole } from "@/lib/session";
 import type { PaginatedResponse, User } from "@/types";
+import { FULL_USER_SELECT } from "@/lib/api-helpers";
 
 export async function GET(request: Request) {
   try {
@@ -35,15 +36,7 @@ export async function GET(request: Request) {
         skip,
         take: limit,
         select: {
-          id: true,
-          name: true,
-          email: true,
-          phone: true,
-          image: true,
-          role: true,
-          bio: true,
-          createdAt: true,
-          updatedAt: true,
+          ...FULL_USER_SELECT,
           _count: {
             select: {
               properties: true,
@@ -64,7 +57,7 @@ export async function GET(request: Request) {
 
     const totalPages = Math.ceil(total / limit);
 
-    const response: PaginatedResponse<User & { _count: any }> = {
+    const response = {
       data: users,
       total,
       page,

@@ -1,8 +1,24 @@
 import { NextResponse } from "next/server";
-import { db } from "@/lib/prisma";
+import db from "@/lib/prisma";
 import { requireAuth } from "@/lib/session";
-import { BookingStatus, PropertyStatus } from "@prisma/client";
 import type { BookingFormData, BookingWithDetails, PaginatedResponse } from "@/types";
+import { FULL_USER_SELECT, parsePropertyImages } from "@/lib/api-helpers";
+
+const BOOKING_STATUS = {
+  PENDING: "PENDING",
+  CONFIRMED: "CONFIRMED",
+  REJECTED: "REJECTED",
+  CANCELLED: "CANCELLED",
+  COMPLETED: "COMPLETED",
+  RESCHEDULED: "RESCHEDULED",
+} as const;
+
+const PROPERTY_STATUS = {
+  PENDING: "PENDING",
+  APPROVED: "APPROVED",
+  REJECTED: "REJECTED",
+  RENTED: "RENTED",
+} as const;
 
 export async function GET(request: Request) {
   try {
@@ -36,41 +52,30 @@ export async function GET(request: Request) {
           property: {
             include: {
               landlord: {
-                select: {
-                  id: true,
-                  name: true,
-                  image: true,
-                },
+                select: FULL_USER_SELECT,
               },
             },
           },
           tenant: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-              phone: true,
-              image: true,
-            },
+            select: FULL_USER_SELECT,
           },
           landlord: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-              phone: true,
-              image: true,
-            },
+            select: FULL_USER_SELECT,
           },
         },
       }),
       db.booking.count({ where }),
     ]);
 
+    const processedBookings = bookings.map((b) => ({
+      ...b,
+      property: parsePropertyImages(b.property),
+    }));
+
     const totalPages = Math.ceil(total / limit);
 
-    const response: PaginatedResponse<BookingWithDetails> = {
-      data: bookings,
+    const response = {
+      data: processedBookings,
       total,
       page,
       limit,
@@ -138,7 +143,7 @@ export async function POST(request: Request) {
       );
     }
 
-    if (property.status !== PropertyStatus.APPROVED) {
+    if (property.status !== PROPERTY_STATUS.APPROVED) {
       return NextResponse.json(
         {
           success: false,
@@ -163,7 +168,7 @@ export async function POST(request: Request) {
         propertyId,
         tenantId: user.id,
         status: {
-          in: [BookingStatus.PENDING, BookingStatus.CONFIRMED],
+          in: [BOOKING_STATUS.PENDING, BOOKING_STATUS.CONFIRMED],
         },
       },
     });
@@ -189,44 +194,33 @@ export async function POST(request: Request) {
         alternateTime,
         message,
         numberOfPeople,
-        status: BookingStatus.PENDING,
+        status: BOOKING_STATUS.PENDING,
       },
       include: {
         property: {
           include: {
             landlord: {
-              select: {
-                id: true,
-                name: true,
-                image: true,
-              },
+              select: FULL_USER_SELECT,
             },
           },
         },
         tenant: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            phone: true,
-            image: true,
-          },
+          select: FULL_USER_SELECT,
         },
         landlord: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            phone: true,
-            image: true,
-          },
+          select: FULL_USER_SELECT,
         },
       },
     });
 
+    const processedBooking = {
+      ...booking,
+      property: parsePropertyImages(booking.property),
+    };
+
     return NextResponse.json({
       success: true,
-      data: booking,
+      data: processedBooking,
       message: "预约提交成功，等待房东确认",
     });
   } catch (error) {

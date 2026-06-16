@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/session";
 import db from "@/lib/prisma";
+import { FULL_USER_SELECT, parsePropertyImages } from "@/lib/api-helpers";
 
 export async function POST(request: Request) {
   try {
@@ -35,17 +36,21 @@ export async function POST(request: Request) {
       include: {
         property: true,
         complainant: {
-          select: { id: true, name: true, email: true },
+          select: FULL_USER_SELECT,
         },
         respondent: {
-          select: { id: true, name: true, email: true },
+          select: FULL_USER_SELECT,
         },
       },
     });
 
+    const processedComplaint = complaint.property
+      ? { ...complaint, property: parsePropertyImages(complaint.property) }
+      : complaint;
+
     return NextResponse.json({
       success: true,
-      data: complaint,
+      data: processedComplaint,
       message: "投诉提交成功，我们会尽快处理",
     });
   } catch (error) {
@@ -87,17 +92,15 @@ export async function GET(request: Request) {
       db.complaint.findMany({
         where,
         include: {
-          property: {
-            select: { id: true, title: true, images: true },
-          },
+          property: true,
           complainant: {
-            select: { id: true, name: true, image: true },
+            select: FULL_USER_SELECT,
           },
           respondent: {
-            select: { id: true, name: true, image: true },
+            select: FULL_USER_SELECT,
           },
           handler: {
-            select: { id: true, name: true },
+            select: FULL_USER_SELECT,
           },
         },
         orderBy: { createdAt: "desc" },
@@ -107,9 +110,19 @@ export async function GET(request: Request) {
       db.complaint.count({ where }),
     ]);
 
+    const processedComplaints = complaints.map((c) => {
+      if (c.property) {
+        return {
+          ...c,
+          property: parsePropertyImages(c.property),
+        };
+      }
+      return c;
+    });
+
     return NextResponse.json({
       success: true,
-      data: complaints,
+      data: processedComplaints,
       total,
       page,
       limit,

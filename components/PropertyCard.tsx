@@ -23,19 +23,20 @@ import { STATUS_COLORS } from "@/lib/constants";
 
 interface PropertyCardProps {
   property: Property & {
-    landlord?: { name: string; image: string | null };
+    landlord?: { name: string | null; image: string | null };
     _count?: { favorites: number; reviews: number };
   };
   showActions?: boolean;
+  viewMode?: "grid" | "list";
 }
 
-export default function PropertyCard({ property, showActions = true }: PropertyCardProps) {
-  const { data: session } = useSession();
+export default function PropertyCard({ property, showActions = true, viewMode = "grid" }: PropertyCardProps) {
+  const { data: session } = useSession() ?? {};
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isFavorite, setIsFavorite] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
 
-  const images = Array.isArray(property.images) ? property.images : [];
+  const images: string[] = property.images;
 
   const nextImage = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -82,11 +83,17 @@ export default function PropertyCard({ property, showActions = true }: PropertyC
   return (
     <Link
       href={`/properties/${property.id}`}
-      className="group block bg-white rounded-xl overflow-hidden border border-gray-200 property-card"
+      className={cn(
+        "group block bg-white rounded-xl overflow-hidden border border-gray-200 property-card",
+        viewMode === "list" && "flex flex-col sm:flex-row"
+      )}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      <div className="relative aspect-[4/3] overflow-hidden bg-gray-100">
+      <div className={cn(
+        "relative overflow-hidden bg-gray-100",
+        viewMode === "list" ? "sm:w-72 sm:h-52 w-full aspect-[4/3]" : "aspect-[4/3]"
+      )}>
         {images.length > 0 ? (
           <>
             <Image

@@ -132,8 +132,8 @@ export default function AdminPropertiesPage() {
             <div key={property.id} className="bg-white rounded-xl p-6 border border-gray-200 hover:shadow-lg transition-shadow">
               <div className="flex gap-6">
                 <div className="w-32 h-24 bg-gray-200 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden">
-                  {Array.isArray(property.images) && property.images.length > 0 ? (
-                    <img src={property.images[0] as string} alt={property.title} className="w-full h-full object-cover" />
+                  {property.images.length > 0 ? (
+                    <img src={property.images[0]} alt={property.title} className="w-full h-full object-cover" />
                   ) : (
                     <Home className="w-8 h-8 text-gray-400" />
                   )}
@@ -201,8 +201,8 @@ export default function AdminPropertiesPage() {
             </div>
             <div className="p-6 space-y-6">
               <div className="aspect-video bg-gray-200 rounded-lg overflow-hidden">
-                {Array.isArray(selectedProperty.images) && selectedProperty.images.length > 0 ? (
-                  <img src={selectedProperty.images[0] as string} alt={selectedProperty.title} className="w-full h-full object-cover" />
+                {selectedProperty.images.length > 0 ? (
+                  <img src={selectedProperty.images[0]} alt={selectedProperty.title} className="w-full h-full object-cover" />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center">
                     <Home className="w-16 h-16 text-gray-400" />

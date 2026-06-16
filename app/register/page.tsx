@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { signIn, useSession } from "next-auth/react";
 import { useForm } from "react-hook-form";
@@ -11,6 +11,7 @@ import Link from "next/link";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import axios from "axios";
+import LoadingSpinner from "@/components/LoadingSpinner";
 
 const registerSchema = z.object({
   name: z.string().min(2, "姓名至少2个字符"),
@@ -30,16 +31,11 @@ type RegisterFormData = z.infer<typeof registerSchema>;
 
 export default function RegisterPage() {
   const router = useRouter();
-  const { data: session } = useSession();
+  const sessionResult = useSession();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [selectedRole, setSelectedRole] = useState<"TENANT" | "LANDLORD">("TENANT");
-
-  if (session) {
-    router.push("/properties");
-    return null;
-  }
 
   const {
     register,
@@ -57,6 +53,14 @@ export default function RegisterPage() {
       phone: "",
     },
   });
+
+  const session = sessionResult?.data;
+
+  useEffect(() => {
+    if (session) {
+      router.push("/properties");
+    }
+  }, [session, router]);
 
   const onSubmit = async (data: RegisterFormData) => {
     setIsLoading(true);
@@ -82,16 +86,19 @@ export default function RegisterPage() {
         toast.error(response.data.message || "注册失败");
       }
     } catch (error: any) {
-      toast.error(error.response?.data?.message || "注册失败，请稍后重试");
+      toast.error(error?.response?.data?.message || "注册失败，请稍后重试");
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleRoleSelect = (role: "TENANT" | "LANDLORD") => {
-    setSelectedRole(role);
-    setValue("role", role);
-  };
+  if (session) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <LoadingSpinner />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
@@ -109,43 +116,59 @@ export default function RegisterPage() {
           </p>
         </div>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-3">我是</label>
+        <div className="mb-6">
           <div className="grid grid-cols-2 gap-3">
             <button
               type="button"
-              onClick={() => handleRoleSelect("TENANT")}
+              onClick={() => {
+                setSelectedRole("TENANT");
+                setValue("role", "TENANT");
+              }}
               className={cn(
-                "flex flex-col items-center justify-center p-4 border-2 rounded-xl transition-all",
+                "p-4 rounded-xl border-2 transition-all text-center",
                 selectedRole === "TENANT"
-                  ? "border-blue-600 bg-blue-50 text-blue-900"
-                  : "border-gray-200 hover:border-gray-300 text-gray-700"
+                  ? "border-blue-600 bg-blue-50"
+                  : "border-gray-200 hover:border-gray-300"
               )}
             >
-              <User className={cn("h-8 w-8 mb-2", selectedRole === "TENANT" ? "text-blue-600" : "text-gray-400")} />
-              <span className="font-medium">租客</span>
-              <span className="text-xs text-gray-500 mt-1">找房子租</span>
+              <User className={cn(
+                "mx-auto h-8 w-8 mb-2",
+                selectedRole === "TENANT" ? "text-blue-600" : "text-gray-400"
+              )} />
+              <p className={cn(
+                "font-medium",
+                selectedRole === "TENANT" ? "text-blue-700" : "text-gray-600"
+              )}>我是租客</p>
+              <p className="text-xs text-gray-500 mt-1">寻找房源</p>
             </button>
             <button
               type="button"
-              onClick={() => handleRoleSelect("LANDLORD")}
+              onClick={() => {
+                setSelectedRole("LANDLORD");
+                setValue("role", "LANDLORD");
+              }}
               className={cn(
-                "flex flex-col items-center justify-center p-4 border-2 rounded-xl transition-all",
+                "p-4 rounded-xl border-2 transition-all text-center",
                 selectedRole === "LANDLORD"
-                  ? "border-blue-600 bg-blue-50 text-blue-900"
-                  : "border-gray-200 hover:border-gray-300 text-gray-700"
+                  ? "border-blue-600 bg-blue-50"
+                  : "border-gray-200 hover:border-gray-300"
               )}
             >
-              <Building2 className={cn("h-8 w-8 mb-2", selectedRole === "LANDLORD" ? "text-blue-600" : "text-gray-400")} />
-              <span className="font-medium">房东</span>
-              <span className="text-xs text-gray-500 mt-1">发布房源</span>
+              <Building2 className={cn(
+                "mx-auto h-8 w-8 mb-2",
+                selectedRole === "LANDLORD" ? "text-blue-600" : "text-gray-400"
+              )} />
+              <p className={cn(
+                "font-medium",
+                selectedRole === "LANDLORD" ? "text-blue-700" : "text-gray-600"
+              )}>我是房东</p>
+              <p className="text-xs text-gray-500 mt-1">发布房源</p>
             </button>
           </div>
+          <input type="hidden" {...register("role")} />
         </div>
 
         <form className="mt-8 space-y-6" onSubmit={handleSubmit(onSubmit)}>
-          <input type="hidden" {...register("role")} />
-
           <div className="space-y-4">
             <div>
               <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
@@ -159,7 +182,7 @@ export default function RegisterPage() {
                   "appearance-none relative block w-full px-3 py-3 border rounded-lg placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent sm:text-sm",
                   errors.name ? "border-red-500" : "border-gray-300"
                 )}
-                placeholder="请输入您的姓名"
+                placeholder="请输入姓名"
               />
               {errors.name && (
                 <p className="mt-1 text-sm text-red-600">{errors.name.message}</p>
@@ -188,26 +211,20 @@ export default function RegisterPage() {
 
             <div>
               <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
-                手机号码 <span className="text-gray-400">(选填)</span>
+                手机号（选填）
               </label>
               <input
                 id="phone"
                 type="tel"
                 {...register("phone")}
-                className={cn(
-                  "appearance-none relative block w-full px-3 py-3 border rounded-lg placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent sm:text-sm",
-                  errors.phone ? "border-red-500" : "border-gray-300"
-                )}
-                placeholder="请输入手机号码"
+                className="appearance-none relative block w-full px-3 py-3 border border-gray-300 rounded-lg placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent sm:text-sm"
+                placeholder="请输入手机号"
               />
-              {errors.phone && (
-                <p className="mt-1 text-sm text-red-600">{errors.phone.message}</p>
-              )}
             </div>
 
             <div>
               <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
-                设置密码
+                密码
               </label>
               <div className="relative">
                 <input
@@ -264,28 +281,11 @@ export default function RegisterPage() {
             </div>
           </div>
 
-          <div className="flex items-start">
-            <div className="flex items-center h-5">
-              <input
-                id="terms"
-                name="terms"
-                type="checkbox"
-                required
-                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-              />
-            </div>
-            <div className="ml-2 text-sm">
-              <label htmlFor="terms" className="text-gray-600">
-                我已阅读并同意{" "}
-                <a href="#" className="text-blue-600 hover:text-blue-500">
-                  用户协议
-                </a>{" "}
-                和{" "}
-                <a href="#" className="text-blue-600 hover:text-blue-500">
-                  隐私政策
-                </a>
-              </label>
-            </div>
+          <div className="flex items-center">
+            <Shield className="h-4 w-4 text-gray-400 mr-2" />
+            <p className="text-xs text-gray-500">
+              我们重视您的隐私，您的信息将被安全加密存储
+            </p>
           </div>
 
           <button

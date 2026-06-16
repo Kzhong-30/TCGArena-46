@@ -1,7 +1,14 @@
 import { NextResponse } from "next/server";
-import { db } from "@/lib/prisma";
+import db from "@/lib/prisma";
 import { requireAuth } from "@/lib/session";
-import { PropertyStatus } from "@prisma/client";
+import { FULL_USER_SELECT, parsePropertyImages } from "@/lib/api-helpers";
+
+const PROPERTY_STATUS = {
+  PENDING: "PENDING",
+  APPROVED: "APPROVED",
+  REJECTED: "REJECTED",
+  RENTED: "RENTED",
+} as const;
 
 export async function POST(request: Request) {
   try {
@@ -38,7 +45,7 @@ export async function POST(request: Request) {
       );
     }
 
-    if (property.status !== PropertyStatus.APPROVED) {
+    if (property.status !== PROPERTY_STATUS.APPROVED) {
       return NextResponse.json(
         {
           success: false,
@@ -84,11 +91,7 @@ export async function POST(request: Request) {
         property: {
           include: {
             landlord: {
-              select: {
-                id: true,
-                name: true,
-                image: true,
-              },
+              select: FULL_USER_SELECT,
             },
             _count: {
               select: {
@@ -102,9 +105,14 @@ export async function POST(request: Request) {
       },
     });
 
+    const processedFavorite = {
+      ...favorite,
+      property: parsePropertyImages(favorite.property),
+    };
+
     return NextResponse.json({
       success: true,
-      data: favorite,
+      data: processedFavorite,
       message: "收藏成功",
     });
   } catch (error) {

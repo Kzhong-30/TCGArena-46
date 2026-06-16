@@ -11,7 +11,7 @@ import {
   Castle,
   Hotel,
   Warehouse,
-  OfficeBuilding,
+  Building,
   ShoppingBag,
   BedDouble,
   Bath,
@@ -19,7 +19,7 @@ import {
   Compass,
   Sofa,
   Car,
-  Elevator,
+  ArrowUpCircle,
   Trees,
   Waves,
   Dumbbell,
@@ -30,22 +30,18 @@ import {
 import {
   PROPERTY_TYPES,
   ORIENTATIONS,
-  PRICE_RANGES,
+  RENT_RANGES,
   AREA_RANGES,
   BEDROOM_OPTIONS,
   FACILITIES,
-  DISTRICTS,
+  CITIES,
 } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import type { PropertyFilters } from "@/types";
 
 interface PropertyFilterProps {
   filters: PropertyFilters;
-  onFilterChange: (filters: PropertyFilters) => void;
-  onApply: () => void;
-  onReset: () => void;
-  selectedCity: string;
-  totalCount: number;
+  onChange: (filters: Partial<PropertyFilters>) => void;
 }
 
 const PROPERTY_TYPE_ICONS: Record<string, any> = {
@@ -55,17 +51,25 @@ const PROPERTY_TYPE_ICONS: Record<string, any> = {
   STUDIO: Hotel,
   LOFT: Warehouse,
   DORMITORY: Hotel,
-  OFFICE: OfficeBuilding,
+  OFFICE: Building,
   COMMERCIAL: ShoppingBag,
+};
+
+const FACILITY_ICONS: Record<string, any> = {
+  Car,
+  ArrowUpCircle,
+  Trees,
+  Dumbbell,
+  Waves,
+  Sofa,
+  Dog,
+  Cigarette,
+  Elevator: ArrowUpCircle,
 };
 
 export default function PropertyFilter({
   filters,
-  onFilterChange,
-  onApply,
-  onReset,
-  selectedCity,
-  totalCount,
+  onChange,
 }: PropertyFilterProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
@@ -85,11 +89,10 @@ export default function PropertyFilter({
   };
 
   const handleFilterChange = (key: keyof PropertyFilters, value: any) => {
-    onFilterChange({
-      ...filters,
+    onChange({
       [key]: value,
       page: 1,
-    });
+    } as Partial<PropertyFilters>);
   };
 
   const handlePriceRangeSelect = (min: number, max: number | null) => {
@@ -103,7 +106,7 @@ export default function PropertyFilter({
   };
 
   const handleFacilityToggle = (key: string) => {
-    handleFilterChange(key, !filters[key as keyof PropertyFilters]);
+    handleFilterChange(key as keyof PropertyFilters, !filters[key as keyof PropertyFilters]);
   };
 
   const isPriceRangeSelected = (min: number, max: number | null) => {
@@ -158,7 +161,7 @@ export default function PropertyFilter({
     return count;
   };
 
-  const availableDistricts = selectedCity ? DISTRICTS[selectedCity] || [] : [];
+  const availableCities = CITIES;
 
   return (
     <div className="w-full">
@@ -182,51 +185,41 @@ export default function PropertyFilter({
             )}
           </button>
 
-          {hasActiveFilters() && (
-            <button
-              onClick={onReset}
-              className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700"
-            >
-              <RotateCcw className="h-4 w-4" />
-              重置筛选
-            </button>
-          )}
+
         </div>
 
-        <div className="text-sm text-gray-500">
-          共找到 <span className="font-semibold text-gray-900">{totalCount}</span> 套房源
-        </div>
+
       </div>
 
       {isOpen && (
         <div className="bg-white rounded-xl shadow-lg p-6 mb-6 border border-gray-100">
-          {availableDistricts.length > 0 && (
+          {availableCities.length > 0 && (
             <div className="mb-6 pb-6 border-b border-gray-100">
-              <h3 className="font-semibold text-gray-900 mb-3">区域</h3>
+              <h3 className="font-semibold text-gray-900 mb-3">城市</h3>
               <div className="flex flex-wrap gap-2">
                 <button
-                  onClick={() => handleFilterChange("district", undefined)}
+                  onClick={() => handleFilterChange("city", undefined)}
                   className={cn(
                     "px-4 py-2 rounded-full text-sm font-medium transition-colors",
-                    !filters.district
+                    !filters.city
                       ? "bg-blue-600 text-white"
                       : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                   )}
                 >
                   全部
                 </button>
-                {availableDistricts.map((district) => (
+                {availableCities.map((city) => (
                   <button
-                    key={district}
-                    onClick={() => handleFilterChange("district", district)}
+                    key={city}
+                    onClick={() => handleFilterChange("city", city)}
                     className={cn(
                       "px-4 py-2 rounded-full text-sm font-medium transition-colors",
-                      filters.district === district
+                      filters.city === city
                         ? "bg-blue-600 text-white"
                         : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                     )}
                   >
-                    {district}
+                    {city}
                   </button>
                 ))}
               </div>
@@ -296,7 +289,7 @@ export default function PropertyFilter({
               {expandedSections.price && (
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                   <button
-                    onClick={() => handlePriceRangeSelect(undefined as any, undefined as any)}
+                    onClick={() => handlePriceRangeSelect(0, null)}
                     className={cn(
                       "px-4 py-3 rounded-lg text-sm font-medium transition-colors",
                       filters.minPrice === undefined && filters.maxPrice === undefined
@@ -306,18 +299,18 @@ export default function PropertyFilter({
                   >
                     不限
                   </button>
-                  {PRICE_RANGES.map((range) => (
+                  {RENT_RANGES.map((range, index) => (
                     <button
-                      key={range.label}
-                      onClick={() => handlePriceRangeSelect(range.min, range.max!)}
+                      key={index}
+                      onClick={() => handlePriceRangeSelect(range[0], range[1] === Infinity ? null : range[1])}
                       className={cn(
                         "px-4 py-3 rounded-lg text-sm font-medium transition-colors",
-                        isPriceRangeSelected(range.min, range.max)
+                        isPriceRangeSelected(range[0], range[1] === Infinity ? null : range[1])
                           ? "bg-blue-600 text-white"
                           : "bg-gray-50 text-gray-700 hover:bg-gray-100"
                       )}
                     >
-                      {range.label}
+                      {range[1] === Infinity ? `${range[0]}+` : `${range[0]}-${range[1]}`}
                     </button>
                   ))}
                 </div>
@@ -342,7 +335,7 @@ export default function PropertyFilter({
               {expandedSections.area && (
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                   <button
-                    onClick={() => handleAreaRangeSelect(undefined as any, undefined as any)}
+                    onClick={() => handleAreaRangeSelect(0, null)}
                     className={cn(
                       "px-4 py-3 rounded-lg text-sm font-medium transition-colors",
                       filters.minArea === undefined && filters.maxArea === undefined
@@ -352,18 +345,18 @@ export default function PropertyFilter({
                   >
                     不限
                   </button>
-                  {AREA_RANGES.map((range) => (
+                  {AREA_RANGES.map((range, index) => (
                     <button
-                      key={range.label}
-                      onClick={() => handleAreaRangeSelect(range.min, range.max!)}
+                      key={index}
+                      onClick={() => handleAreaRangeSelect(range[0], range[1] === Infinity ? null : range[1])}
                       className={cn(
                         "px-4 py-3 rounded-lg text-sm font-medium transition-colors",
-                        isAreaRangeSelected(range.min, range.max)
+                        isAreaRangeSelected(range[0], range[1] === Infinity ? null : range[1])
                           ? "bg-blue-600 text-white"
                           : "bg-gray-50 text-gray-700 hover:bg-gray-100"
                       )}
                     >
-                      {range.label}
+                      {range[1] === Infinity ? `${range[0]}+` : `${range[0]}-${range[1]}`}
                     </button>
                   ))}
                 </div>
@@ -403,16 +396,16 @@ export default function PropertyFilter({
                       </button>
                       {BEDROOM_OPTIONS.map((option) => (
                         <button
-                          key={option.value}
-                          onClick={() => handleFilterChange("bedrooms", option.value)}
+                          key={option}
+                          onClick={() => handleFilterChange("bedrooms", option)}
                           className={cn(
                             "px-4 py-2 rounded-full text-sm font-medium transition-colors",
-                            filters.bedrooms === option.value
+                            filters.bedrooms === option
                               ? "bg-blue-600 text-white"
                               : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                           )}
                         >
-                          {option.label}
+                          {option}室
                         </button>
                       ))}
                     </div>
@@ -481,16 +474,16 @@ export default function PropertyFilter({
                   </button>
                   {ORIENTATIONS.map((orientation) => (
                     <button
-                      key={orientation.value}
-                      onClick={() => handleFilterChange("orientation", orientation.value)}
+                      key={orientation}
+                      onClick={() => handleFilterChange("orientation", orientation)}
                       className={cn(
                         "px-4 py-2 rounded-full text-sm font-medium transition-colors",
-                        filters.orientation === orientation.value
+                        filters.orientation === orientation
                           ? "bg-blue-600 text-white"
                           : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                       )}
                     >
-                      {orientation.label}
+                      {orientation}
                     </button>
                   ))}
                 </div>
@@ -515,7 +508,7 @@ export default function PropertyFilter({
               {expandedSections.facilities && (
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                   {FACILITIES.map((facility) => {
-                    const IconComponent = facility.icon;
+                    const IconComponent = FACILITY_ICONS[facility.icon] || Sofa;
                     const isActive = filters[facility.key as keyof PropertyFilters] as boolean;
                     return (
                       <button
@@ -540,14 +533,38 @@ export default function PropertyFilter({
 
           <div className="mt-8 flex justify-end gap-3 pt-6 border-t border-gray-100">
             <button
-              onClick={onReset}
+              onClick={() => {
+                const resetFilters: PropertyFilters = {
+                  page: 1,
+                  city: undefined,
+                  district: undefined,
+                  propertyType: undefined,
+                  minPrice: undefined,
+                  maxPrice: undefined,
+                  minArea: undefined,
+                  maxArea: undefined,
+                  bedrooms: undefined,
+                  bathrooms: undefined,
+                  orientation: undefined,
+                  furnished: undefined,
+                  hasParking: undefined,
+                  hasElevator: undefined,
+                  hasBalcony: undefined,
+                  hasGarden: undefined,
+                  hasPool: undefined,
+                  hasGym: undefined,
+                  petsAllowed: undefined,
+                  smokingAllowed: undefined,
+                };
+                onChange(resetFilters);
+                setIsOpen(false);
+              }}
               className="px-6 py-2.5 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 font-medium transition-colors"
             >
               重置
             </button>
             <button
               onClick={() => {
-                onApply();
                 setIsOpen(false);
               }}
               className="px-8 py-2.5 text-white bg-blue-600 rounded-lg hover:bg-blue-700 font-medium transition-colors"

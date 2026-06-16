@@ -6,6 +6,9 @@ import { authOptions } from "@/lib/auth-options";
 import PropertyClient from "./PropertyClient";
 import type { PropertyWithDetails, ReviewWithDetails } from "@/types";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 interface PropertyPageProps {
   params: { id: string };
 }
@@ -31,7 +34,7 @@ export async function generateMetadata({
     };
   }
 
-  const images = Array.isArray(property.images) ? property.images : [];
+  const images: string[] = [];
 
   return {
     title: `${property.title} | 城市租房平台`,
@@ -117,10 +120,11 @@ export default async function PropertyPage({ params }: PropertyPageProps) {
 
   const propertyWithDetails: PropertyWithDetails = {
     ...property,
-    reviews: property.reviews as any,
-  };
+    images: [],
+    reviews: property.reviews,
+  } as PropertyWithDetails;
 
-  const reviewsWithDetails: ReviewWithDetails[] = property.reviews as any;
+  const reviewsWithDetails: ReviewWithDetails[] = property.reviews as ReviewWithDetails[];
 
   return (
     <PropertyClient

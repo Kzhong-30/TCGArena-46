@@ -1,8 +1,21 @@
 import { NextResponse } from "next/server";
-import { db } from "@/lib/prisma";
+import db from "@/lib/prisma";
 import { getCurrentUser, requireAuth, requireRole } from "@/lib/session";
-import { PropertyStatus, ListingStatus } from "@prisma/client";
 import type { PropertyFilters, PropertyFormData, PaginatedResponse, PropertyWithDetails } from "@/types";
+import { FULL_USER_SELECT, parsePropertiesImages, parsePropertyImages, stringifyImages } from "@/lib/api-helpers";
+
+const PROPERTY_STATUS = {
+  PENDING: "PENDING",
+  APPROVED: "APPROVED",
+  REJECTED: "REJECTED",
+  RENTED: "RENTED",
+} as const;
+
+const LISTING_STATUS = {
+  ACTIVE: "ACTIVE",
+  INACTIVE: "INACTIVE",
+  SOLD: "SOLD",
+} as const;
 
 export async function GET(request: Request) {
   try {
@@ -42,8 +55,8 @@ export async function GET(request: Request) {
     if (currentUser?.role === "LANDLORD") {
       where.landlordId = currentUser.id;
     } else if (currentUser?.role !== "ADMIN") {
-      where.status = PropertyStatus.APPROVED;
-      where.listingStatus = ListingStatus.ACTIVE;
+      where.status = PROPERTY_STATUS.APPROVED;
+      where.listingStatus = LISTING_STATUS.ACTIVE;
     }
 
     if (filters.query) {
@@ -96,22 +109,12 @@ export async function GET(request: Request) {
         take: limit,
         include: {
           landlord: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-              phone: true,
-              image: true,
-            },
+            select: FULL_USER_SELECT,
           },
           reviews: {
             include: {
               tenant: {
-                select: {
-                  id: true,
-                  name: true,
-                  image: true,
-                },
+                select: FULL_USER_SELECT,
               },
             },
           },
@@ -127,19 +130,32 @@ export async function GET(request: Request) {
       db.property.count({ where }),
     ]);
 
-    const totalPages = Math.ceil(total / limit);
+    const processedProperties = properties.map((p) => {
+      const parsed = parsePropertyImages(p);
+      return {
+        ...parsed,
+        reviews: p.reviews.map((r) => ({
+          ...r,
+          tenant: r.tenant,
+        })),
+      };
+    });
 
-    const response: PaginatedResponse<PropertyWithDetails> = {
-      data: properties,
-      total,
-      page,
-      limit,
-      totalPages,
-    };
+    const totalPages = Math.ceil(total / limit);
+    const hasNextPage = page < totalPages;
+    const hasPrevPage = page > 1;
 
     return NextResponse.json({
       success: true,
-      data: response,
+      data: processedProperties,
+      pagination: {
+        total,
+        page,
+        limit,
+        totalPages,
+        hasNextPage,
+        hasPrevPage,
+      },
     });
   } catch (error) {
     console.error("Error fetching properties:", error);
@@ -255,24 +271,18 @@ export async function POST(request: Request) {
         zipCode,
         latitude,
         longitude,
-        images,
+        images: stringifyImages(images),
         videoUrl,
         virtualTourUrl,
         availableFrom,
         minimumStay,
         maximumStay,
         landlordId: user.id,
-        status: user.role === "ADMIN" ? PropertyStatus.APPROVED : PropertyStatus.PENDING,
+        status: user.role === "ADMIN" ? PROPERTY_STATUS.APPROVED : PROPERTY_STATUS.PENDING,
       },
       include: {
         landlord: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            phone: true,
-            image: true,
-          },
+          select: FULL_USER_SELECT,
         },
         reviews: true,
         _count: {
@@ -285,9 +295,11 @@ export async function POST(request: Request) {
       },
     });
 
+    const processedProperty = parsePropertyImages(property);
+
     return NextResponse.json({
       success: true,
-      data: property,
+      data: processedProperty,
       message: user.role === "ADMIN" ? "房源创建成功" : "房源发布成功，等待管理员审核",
     });
   } catch (error) {
@@ -296,183 +308,6 @@ export async function POST(request: Request) {
       {
         success: false,
         error: error instanceof Error ? error.message : "创建房源失败",
-      },
-      { status: 500 }
-    );
-  }
-}
-      data: properties as unknown as PropertyWithDetails[],
-      pagination: {
-        total,
-        page,
-        limit,
-        totalPages,
-        hasNextPage: page < totalPages,
-        hasPrevPage: page > 1,
-      },
-    });
-  } catch (error) {
-    console.error("Error fetching properties:", error);
-    return NextResponse.json(
-      {
-        success: false,
-        error: "获取房源列表失败",
-      },
-      { status: 500 }
-    );
-  }
-}
-      data: properties as unknown as PropertyWithDetails[],
-      pagination: {
-        total,
-        page,
-        limit,
-        totalPages,
-        hasNextPage: page < totalPages,
-        hasPrevPage: page > 1,
-      },
-    });
-  } catch (error) {
-    console.error("Error fetching properties:", error);
-    return NextResponse.json(
-      {
-        success: false,
-        error: "获取房源列表失败",
-      },
-      { status: 500 }
-    );
-  }
-}
-      images,
-      videoUrl,
-      virtualTourUrl,
-      availableFrom,
-      minimumStay,
-      maximumStay,
-    } = body;
-
-    if (!title || !description || !price || !area || !bedrooms || !bathrooms || !type || !address || !city || !district || !province || !images || images.length === 0) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "请填写所有必填字段",
-        },
-        { status: 400 }
-      );
-    }
-
-    if (price <= 0) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "价格必须大于0",
-        },
-        { status: 400 }
-      );
-    }
-
-    if (area <= 0) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "面积必须大于0",
-        },
-        { status: 400 }
-      );
-    }
-
-    const property = await db.property.create({
-      data: {
-        title,
-        description,
-        price,
-        rentPeriod,
-        deposit,
-        area,
-        bedrooms,
-        bathrooms,
-        floor,
-        totalFloors,
-        orientation,
-        type,
-        furnished,
-        hasParking,
-        hasElevator,
-        hasBalcony,
-        hasGarden,
-        hasPool,
-        hasGym,
-        petsAllowed,
-        smokingAllowed,
-        address,
-        city,
-        district,
-        province,
-        zipCode,
-        latitude,
-        longitude,
-        images,
-        videoUrl,
-        virtualTourUrl,
-        availableFrom,
-        minimumStay,
-        maximumStay,
-        landlordId: user.id,
-        status: user.role === "ADMIN" ? PropertyStatus.APPROVED : PropertyStatus.PENDING,
-      },
-      include: {
-        landlord: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            phone: true,
-            image: true,
-          },
-        },
-        reviews: true,
-        _count: {
-          select: {
-            bookings: true,
-            reviews: true,
-            favorites: true,
-          },
-        },
-      },
-    });
-
-    return NextResponse.json({
-      success: true,
-      data: property,
-      message: user.role === "ADMIN" ? "房源创建成功" : "房源发布成功，等待管理员审核",
-    });
-  } catch (error) {
-    console.error("Error creating property:", error);
-    return NextResponse.json(
-      {
-        success: false,
-        error: error instanceof Error ? error.message : "创建房源失败",
-      },
-      { status: 500 }
-    );
-  }
-}
-      data: properties as unknown as PropertyWithDetails[],
-      pagination: {
-        total,
-        page,
-        limit,
-        totalPages,
-        hasNextPage: page < totalPages,
-        hasPrevPage: page > 1,
-      },
-    });
-  } catch (error) {
-    console.error("Error fetching properties:", error);
-    return NextResponse.json(
-      {
-        success: false,
-        error: "获取房源列表失败",
       },
       { status: 500 }
     );

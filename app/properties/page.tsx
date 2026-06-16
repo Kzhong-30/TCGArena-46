@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, Suspense } from "react";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
-import dynamic from "next/dynamic";
+import dynamicImport from "next/dynamic";
 import { LayoutGrid, Map as MapIcon, Filter, X } from "lucide-react";
 import SearchBar from "@/components/SearchBar";
 import PropertyFilter from "@/components/PropertyFilter";
@@ -11,8 +11,9 @@ import { cn } from "@/lib/utils";
 import type { PropertyWithDetails, PropertyFilters } from "@/types";
 import { CITIES } from "@/lib/constants";
 import { toast } from "sonner";
+import LoadingSpinner from "@/components/LoadingSpinner";
 
-const PropertyMap = dynamic(
+const PropertyMap = dynamicImport(
   () => import("@/components/PropertyMap"),
   { ssr: false, loading: () => (
     <div className="flex items-center justify-center h-full min-h-[600px] bg-gray-50 rounded-xl">
@@ -34,7 +35,7 @@ interface PropertiesResponse {
   };
 }
 
-export default function PropertiesPage() {
+function PropertiesPageContent() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -47,7 +48,7 @@ export default function PropertiesPage() {
   const [isLoading, setIsLoading] = useState(true);
 
   const query = searchParams.get("query") || "";
-  const city = searchParams.get("city") || CITIES[0].value;
+  const city = searchParams.get("city") || CITIES[0];
   const page = parseInt(searchParams.get("page") || "1", 10);
   const sortBy = searchParams.get("sortBy") || "createdAt";
   const sortOrder = (searchParams.get("sortOrder") as "asc" | "desc") || "desc";
@@ -87,8 +88,8 @@ export default function PropertiesPage() {
       const data: PropertiesResponse = await res.json();
 
       if (data.success) {
-        setProperties(data.data);
-        setTotal(data.pagination.total);
+        setProperties(data.data || []);
+        setTotal(data.pagination?.total || 0);
       } else {
         toast.error("加载房源失败");
       }
@@ -349,32 +350,40 @@ export default function PropertiesPage() {
             </div>
 
             {viewMode === "list" ? (
-              <Suspense fallback={<div className="animate-pulse">加载中...</div>}>
-                <PropertyList
-                  properties={properties}
-                  total={total}
-                  page={page}
-                  totalPages={totalPages}
-                  sortBy={sortBy}
-                  sortOrder={sortOrder}
-                  viewMode={listLayoutMode}
-                  onSortChange={handleSortChange}
-                  onViewModeChange={handleListLayoutChange}
-                  onPageChange={handlePageChange}
-                  isLoading={isLoading}
-                />
-              </Suspense>
+              <PropertyList
+                properties={properties}
+                total={total}
+                page={page}
+                totalPages={totalPages}
+                sortBy={sortBy}
+                sortOrder={sortOrder}
+                viewMode={listLayoutMode}
+                onSortChange={handleSortChange}
+                onViewModeChange={handleListLayoutChange}
+                onPageChange={handlePageChange}
+                isLoading={isLoading}
+              />
             ) : (
-              <Suspense fallback={<div className="animate-pulse h-[600px]">加载中...</div>}>
-                <PropertyMap
-                  properties={properties}
-                  isLoading={isLoading}
-                />
-              </Suspense>
+              <PropertyMap
+                properties={properties}
+                isLoading={isLoading}
+              />
             )}
           </main>
         </div>
       </div>
     </div>
+  );
+}
+
+export default function PropertiesPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <LoadingSpinner size="lg" />
+      </div>
+    }>
+      <PropertiesPageContent />
+    </Suspense>
   );
 }

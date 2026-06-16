@@ -2,6 +2,7 @@ import { requireRole } from "@/lib/session";
 import PropertyWizard from "@/components/PropertyWizard";
 
 export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export default async function CreatePropertyPage() {
   await requireRole(["LANDLORD", "ADMIN"]);

@@ -1,42 +1,170 @@
-import type {
-  User,
-  Property,
-  Booking,
-  Message,
-  Review,
-  Complaint,
-  Favorite,
-  UserRole,
-  PropertyStatus,
-  PropertyType,
-  ListingStatus,
-  BookingStatus,
-  MessageStatus,
-  ComplaintStatus,
-  RentPeriod,
-} from "@prisma/client";
+export type UserRole = 'TENANT' | 'LANDLORD' | 'ADMIN';
 
-export type {
-  User,
-  Property,
-  Booking,
-  Message,
-  Review,
-  Complaint,
-  Favorite,
-  UserRole,
-  PropertyStatus,
-  PropertyType,
-  ListingStatus,
-  BookingStatus,
-  MessageStatus,
-  ComplaintStatus,
-  RentPeriod,
-};
+export type PropertyStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'RENTED';
+
+export type PropertyType =
+  | 'APARTMENT'
+  | 'HOUSE'
+  | 'VILLA'
+  | 'STUDIO'
+  | 'LOFT'
+  | 'DORMITORY'
+  | 'OFFICE'
+  | 'COMMERCIAL';
+
+export type ListingStatus = 'ACTIVE' | 'INACTIVE' | 'SOLD';
+
+export type BookingStatus =
+  | 'PENDING'
+  | 'CONFIRMED'
+  | 'REJECTED'
+  | 'CANCELLED'
+  | 'COMPLETED'
+  | 'RESCHEDULED';
+
+export type MessageStatus = 'SENT' | 'DELIVERED' | 'READ';
+
+export type ComplaintStatus = 'OPEN' | 'IN_PROGRESS' | 'RESOLVED' | 'CLOSED';
+
+export type RentPeriod = 'MONTHLY' | 'QUARTERLY' | 'YEARLY' | 'DAILY';
+
+export interface User {
+  id: string;
+  name: string | null;
+  email: string;
+  emailVerified: Date | null;
+  password: string | null;
+  image: string | null;
+  phone: string | null;
+  role: UserRole;
+  isActive: boolean;
+  bio: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface Property {
+  id: string;
+  title: string;
+  description: string;
+  price: number;
+  rentPeriod: RentPeriod;
+  deposit: number | null;
+  area: number;
+  bedrooms: number;
+  bathrooms: number;
+  floor: number | null;
+  totalFloors: number | null;
+  orientation: string | null;
+  type: PropertyType;
+  furnished: boolean;
+  hasParking: boolean;
+  hasElevator: boolean;
+  hasBalcony: boolean;
+  hasGarden: boolean;
+  hasPool: boolean;
+  hasGym: boolean;
+  petsAllowed: boolean;
+  smokingAllowed: boolean;
+  address: string;
+  city: string;
+  district: string;
+  province: string;
+  zipCode: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  // 在数据库中存储为 JSON 字符串
+  images: string[];
+  videoUrl: string | null;
+  virtualTourUrl: string | null;
+  status: PropertyStatus;
+  listingStatus: ListingStatus;
+  isFeatured: boolean;
+  availableFrom: Date | null;
+  minimumStay: number | null;
+  maximumStay: number | null;
+  landlordId: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface Booking {
+  id: string;
+  propertyId: string;
+  tenantId: string;
+  landlordId: string;
+  preferredDate: Date;
+  preferredTime: string;
+  alternateDate: Date | null;
+  alternateTime: string | null;
+  message: string | null;
+  numberOfPeople: number | null;
+  status: BookingStatus;
+  rejectionReason: string | null;
+  rescheduleNote: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface Message {
+  id: string;
+  senderId: string;
+  receiverId: string;
+  propertyId: string | null;
+  content: string;
+  status: MessageStatus;
+  isRead: boolean;
+  createdAt: Date;
+}
+
+export interface Review {
+  id: string;
+  propertyId: string;
+  tenantId: string;
+  rating: number;
+  cleanliness: number | null;
+  location: number | null;
+  communication: number | null;
+  value: number | null;
+  comment: string | null;
+  createdAt: Date;
+}
+
+export interface Complaint {
+  id: string;
+  title: string;
+  description: string;
+  type: string;
+  propertyId: string | null;
+  complainantId: string;
+  respondentId: string | null;
+  handlerId: string | null;
+  status: ComplaintStatus;
+  priority: string | null;
+  resolution: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface Favorite {
+  id: string;
+  userId: string;
+  propertyId: string;
+  createdAt: Date;
+}
 
 export interface PropertyWithDetails extends Property {
-  landlord: User;
-  reviews: Review[];
+  landlord: {
+    id: string;
+    name: string | null;
+    image: string | null;
+    role: string;
+    createdAt: Date;
+    email: string;
+    phone: string | null;
+    bio: string | null;
+  };
+  reviews: ReviewWithTenant[];
   _count?: {
     bookings: number;
     reviews: number;
@@ -44,16 +172,54 @@ export interface PropertyWithDetails extends Property {
   };
 }
 
+export interface ReviewWithTenant extends Review {
+  tenant: {
+    id: string;
+    image: string | null;
+    name: string | null;
+  };
+}
+
 export interface BookingWithDetails extends Booking {
   property: Property;
-  tenant: User;
-  landlord: User;
+  tenant: {
+    id: string;
+    name: string | null;
+    image: string | null;
+    email: string;
+    phone: string | null;
+  };
+  landlord: {
+    id: string;
+    name: string | null;
+    image: string | null;
+    email: string;
+    phone: string | null;
+  };
 }
 
 export interface MessageWithDetails extends Message {
-  sender: User;
-  receiver: User;
-  property?: Property;
+  sender: {
+    id: string;
+    name: string | null;
+    image: string | null;
+    email?: string;
+    phone?: string | null;
+  };
+  receiver: {
+    id: string;
+    name: string | null;
+    image: string | null;
+    email?: string;
+    phone?: string | null;
+  };
+  property?: {
+    id: string;
+    title: string;
+    price: number;
+    images: string[];
+    address?: string;
+  };
 }
 
 export interface ReviewWithDetails extends Review {
@@ -90,8 +256,10 @@ export interface PropertyFilters {
   petsAllowed?: boolean;
   smokingAllowed?: boolean;
   rentPeriod?: string;
+  amenities?: string[];
+  facility?: string;
   sortBy?: string;
-  sortOrder?: "asc" | "desc";
+  sortOrder?: 'asc' | 'desc';
   page?: number;
   limit?: number;
 }
@@ -150,7 +318,7 @@ export interface PropertyFormData {
   images: string[];
   videoUrl?: string;
   virtualTourUrl?: string;
-  availableFrom?: Date;
+  availableFrom?: string;
   minimumStay?: number;
   maximumStay?: number;
 }
@@ -199,16 +367,28 @@ export interface ApiResponse<T = any> {
 
 export interface Conversation {
   id: string;
-  participant: User;
+  participant: {
+    id: string;
+    name: string | null;
+    image: string | null;
+    email?: string;
+    phone?: string | null;
+  };
   lastMessage?: Message;
   unreadCount: number;
-  property?: Property;
+  property?: {
+    id: string;
+    title: string;
+    price: number;
+    images: string[];
+    address?: string;
+  };
 }
 
 export interface SearchSuggestion {
   id: string;
   text: string;
-  type: "location" | "property" | "landlord";
+  type: 'location' | 'property' | 'landlord';
 }
 
 export interface MapMarker {

@@ -3,7 +3,7 @@
 import {
   Sofa,
   Car,
-  Elevator,
+  ArrowUpCircle,
   Sun,
   Trees,
   Waves,
@@ -48,7 +48,7 @@ const FACILITY_CONFIG: FacilityConfig[] = [
   {
     key: "hasElevator",
     label: "电梯",
-    icon: Elevator,
+    icon: ArrowUpCircle,
     color: "text-purple-600",
     bgColor: "bg-purple-50",
   },

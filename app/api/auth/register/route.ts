@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { hashPassword } from "@/lib/auth";
 import db from "@/lib/prisma";
 import { validateEmail } from "@/lib/utils";
+import { FULL_USER_SELECT } from "@/lib/api-helpers";
 
 export async function POST(request: Request) {
   try {
@@ -50,14 +51,7 @@ export async function POST(request: Request) {
         role: role || "TENANT",
         phone: phone || null,
       },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        role: true,
-        phone: true,
-        createdAt: true,
-      },
+      select: FULL_USER_SELECT,
     });
 
     return NextResponse.json({

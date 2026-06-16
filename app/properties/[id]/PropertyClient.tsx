@@ -75,7 +75,7 @@ export default function PropertyClient({
   const [mapLoaded, setMapLoaded] = useState(false);
   const [L, setL] = useState<typeof import("leaflet") | null>(null);
 
-  const images = Array.isArray(property.images) ? property.images : [];
+  const images: string[] = property.images;
 
   useEffect(() => {
     Promise.all([
@@ -91,9 +91,9 @@ export default function PropertyClient({
     return PROPERTY_TYPES.find((t) => t.value === type)?.label || type;
   };
 
-  const getOrientationLabel = (orientation?: string) => {
+  const getOrientationLabel = (orientation?: string | null) => {
     if (!orientation) return "";
-    return ORIENTATIONS.find((o) => o.value === orientation)?.label || orientation;
+    return ORIENTATIONS.includes(orientation) ? orientation : orientation;
   };
 
   const getRentPeriodLabel = (period: string) => {
@@ -311,7 +311,7 @@ export default function PropertyClient({
             </div>
 
             <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
-              <FacilityIcons property={property as Property} />
+              <FacilityIcons property={property} />
             </div>
 
             <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
@@ -439,7 +439,7 @@ export default function PropertyClient({
       <BookingModal
         isOpen={showBookingModal}
         onClose={() => setShowBookingModal(false)}
-        property={property as Property}
+        property={property}
         landlordId={property.landlordId}
         onSuccess={handleBookingSuccess}
       />

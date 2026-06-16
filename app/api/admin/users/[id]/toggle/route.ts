@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
-import { db } from "@/lib/prisma";
+import db from "@/lib/prisma";
 import { requireRole } from "@/lib/session";
+import { FULL_USER_SELECT } from "@/lib/api-helpers";
 
 export async function PUT(request: Request, { params }: { params: { id: string } }) {
   try {
@@ -42,16 +43,7 @@ export async function PUT(request: Request, { params }: { params: { id: string }
         isActive: !user.isActive,
       },
       select: {
-        id: true,
-        name: true,
-        email: true,
-        phone: true,
-        image: true,
-        role: true,
-        isActive: true,
-        bio: true,
-        createdAt: true,
-        updatedAt: true,
+        ...FULL_USER_SELECT,
         _count: {
           select: {
             properties: true,

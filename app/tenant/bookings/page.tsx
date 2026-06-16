@@ -16,7 +16,7 @@ interface BookingWithDetails extends Booking {
 }
 
 export default function TenantBookingsPage() {
-  const { data: session } = useSession();
+  const { data: session } = useSession() ?? {};
   const [bookings, setBookings] = useState<BookingWithDetails[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -202,7 +202,7 @@ export default function TenantBookingsPage() {
                 <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
                   <div className="flex-1">
                     <div className="flex items-start gap-4">
-                      {booking.property.images && Array.isArray(booking.property.images) && booking.property.images.length > 0 ? (
+                      {booking.property.images.length > 0 ? (
                         <img
                           src={booking.property.images[0]}
                           alt={booking.property.title}

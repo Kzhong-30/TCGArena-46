@@ -1,7 +1,16 @@
 import { NextResponse } from "next/server";
-import { db } from "@/lib/prisma";
+import db from "@/lib/prisma";
 import { requireAuth } from "@/lib/session";
-import { BookingStatus } from "@prisma/client";
+import { FULL_USER_SELECT, parsePropertyImages } from "@/lib/api-helpers";
+
+const BOOKING_STATUS = {
+  PENDING: "PENDING",
+  CONFIRMED: "CONFIRMED",
+  REJECTED: "REJECTED",
+  CANCELLED: "CANCELLED",
+  COMPLETED: "COMPLETED",
+  RESCHEDULED: "RESCHEDULED",
+} as const;
 
 export async function PATCH(request: Request, { params }: { params: { id: string } }) {
   try {
@@ -34,7 +43,7 @@ export async function PATCH(request: Request, { params }: { params: { id: string
       );
     }
 
-    if (booking.status === BookingStatus.CANCELLED || booking.status === BookingStatus.REJECTED || booking.status === BookingStatus.COMPLETED) {
+    if (booking.status === BOOKING_STATUS.CANCELLED || booking.status === BOOKING_STATUS.REJECTED || booking.status === BOOKING_STATUS.COMPLETED) {
       return NextResponse.json(
         { success: false, error: "该预约状态不允许取消" },
         { status: 400 }
@@ -44,23 +53,28 @@ export async function PATCH(request: Request, { params }: { params: { id: string
     const updatedBooking = await db.booking.update({
       where: { id },
       data: {
-        status: BookingStatus.CANCELLED,
+        status: BOOKING_STATUS.CANCELLED,
         rejectionReason: cancelReason || "用户取消",
       },
       include: {
         property: {
           include: {
-            landlord: { select: { id: true, name: true, image: true } },
+            landlord: { select: FULL_USER_SELECT },
           },
         },
-        tenant: { select: { id: true, name: true, email: true, phone: true, image: true } },
-        landlord: { select: { id: true, name: true, email: true, phone: true, image: true } },
+        tenant: { select: FULL_USER_SELECT },
+        landlord: { select: FULL_USER_SELECT },
       },
     });
 
+    const processedBooking = {
+      ...updatedBooking,
+      property: parsePropertyImages(updatedBooking.property),
+    };
+
     return NextResponse.json({
       success: true,
-      data: updatedBooking,
+      data: processedBooking,
       message: "预约已取消",
     });
   } catch (error) {

@@ -10,10 +10,19 @@ import {
   MapPin,
 } from "lucide-react";
 import { cn, getAvatarColor, getInitials } from "@/lib/utils";
-import type { User } from "@/types";
 
 interface LandlordCardProps {
-  landlord: User & {
+  landlord: {
+    id: string;
+    name: string | null;
+    image: string | null;
+    email?: string;
+    phone?: string | null;
+    bio?: string | null;
+    role?: string;
+    isActive?: boolean;
+    createdAt?: Date | string;
+    updatedAt?: Date | string;
     _count?: {
       properties: number;
       reviews: number;
@@ -147,7 +156,7 @@ export default function LandlordCard({
         </div>
         <div className="flex items-center">
           <Clock className="w-4 h-4 mr-2 text-gray-400" />
-          <span>加入时间 {new Date(landlord.createdAt).getFullYear()} 年</span>
+          <span>加入时间 {landlord.createdAt ? new Date(landlord.createdAt).getFullYear() : new Date().getFullYear()} 年</span>
         </div>
       </div>
 
