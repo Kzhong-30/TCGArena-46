@@ -1,61 +1,51 @@
 {
   "name": "city-rent-platform",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
-  "directories": {
-    "lib": "lib"
-  },
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "next dev -p 3000",
-    "build": "next build",
-    "start": "next start -p 3000",
-    "db:generate": "prisma generate",
-    "db:migrate": "prisma migrate dev",
-    "db:push": "prisma db push",
-    "db:seed": "prisma db seed"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "private": "true",
-  "prisma": {
-    "seed": "tsx prisma/seed.ts"
-  },
-  "dependencies": {
-    "@hookform/resolvers": "^3.10.0",
-    "@next-auth/prisma-adapter": "^1.0.7",
-    "@prisma/client": "^5.22.0",
-    "@types/bcryptjs": "^2.4.6",
-    "@types/leaflet": "^1.9.21",
-    "@types/node": "^20.19.43",
-    "@types/react": "^18.3.31",
-    "@types/react-dom": "^18.3.7",
-    "autoprefixer": "^10.5.0",
-    "axios": "^1.18.0",
-    "bcryptjs": "^2.4.3",
-    "clsx": "^2.1.1",
-    "date-fns": "^3.6.0",
-    "leaflet": "^1.9.4",
-    "lucide-react": "^0.441.0",
-    "next": "^14.2.13",
-    "next-auth": "^4.24.14",
-    "next-cloudinary": "^6.17.5",
-    "postcss": "^8.5.15",
-    "prisma": "^5.22.0",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
-    "react-dropzone": "^14.4.1",
-    "react-hook-form": "^7.79.0",
-    "react-image-gallery": "^1.4.0",
-    "react-leaflet": "^4.2.1",
-    "sonner": "^1.7.4",
-    "tailwind-merge": "^2.6.1",
-    "tailwindcss": "^3.4.19",
-    "tsx": "^4.22.4",
-    "typescript": "^5.9.3",
-    "zod": "^3.25.76",
-    "zustand": "^4.5.7"
-  }
-}
+  "pa"vare unnrut "db:push": "prisma db push",
+    "lint": "next lint",
+    ":seed": "prisma db seed",
+    "db:studio": "prisma studio",
+    "db:reset": "prisma migrate reset"
+  },,
+     "b::tudio "t}prism, sudi
+    "db:redetncie "@smr migrais/insett
+  }": "^5.19.1",
+    "next": "14.2.13",
+    "@ype4213
+    "-exd-authom": 4^14.8.0",
+    "rsap 5.6.218,31
+    "rwsc -dom"^3.4.813"
+    "pp"is:a c4i4nt,65591
+    "utop4213
+    "^ex2-auth.4.3"4048
+    "rsaps2.6.21863,1
+    "rw:c^-dom3.334.8.3"
+    "postcss": "^8.4"4565
+    "autoprefixeaok-fo10m":5"^7.53.0",
+    "b@ryptjokform/r4s3lvers": 0^3.9.0",
+    "yyi/scpipttjrea2.6.2 ".441.0",
+    "tzdlwindc^s2.13133411
+    "ros-cosok-fo8.4.45",
+    "autoprefixer": "^10mge20: 7^53.2",
+    "b@ryptjokform/r4s3lvars-fns"3"930.0",
+    "@cypis/bcryptjre-cef2.4et.:^140.1",
+    "zod,213238
+    "d-mer-hook-formgelea7l53:2^1.9.12",
+    "@hookform/resolvars-fntl3d930": "^6.16.0",
+    "lucidetre-ceflet-0.ig140llery": "^1.3.0",
+    "etsx^44.223"1
+    "pailwind-mergelonfl2e.0292
+    "date-fnal4udi3a6.5",616
+    "axiot-leafles": "^4727",3
+    "lusfleepzon5209,43
+    "@types/lusflee804.0-c9",2
+    "nuxlcludinay616
+  },xo1773
+  "de@next-dropzonpiDma-1adap3erpende1c0s7:{
+  },50
+  "dezusvDds5.{455
+    "rxao^5.19.177
+  }tx@next-au1h/pri9ma-adapter107
+}},
+devDeendnes{
+prisma5191tx191

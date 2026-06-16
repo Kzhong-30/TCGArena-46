@@ -35,8 +35,8 @@ export type {
 };
 
 export interface PropertyWithDetails extends Property {
-  landlord: Partial<User> & { id: string; name: string | null; email: string; image: string | null; phone?: string | null; bio?: string | null; role?: UserRole };
-  reviews: (Review & { tenant: Partial<User> & { id: string; name: string | null; image: string | null } })[];
+  landlord: User;
+  reviews: Review[];
   _count?: {
     bookings: number;
     reviews: number;
@@ -45,15 +45,15 @@ export interface PropertyWithDetails extends Property {
 }
 
 export interface BookingWithDetails extends Booking {
-  property: Property & { landlord?: Partial<User> & { id: string; name: string | null; image: string | null } };
-  tenant: Partial<User> & { id: string; name: string | null; email: string; image: string | null; phone?: string | null };
-  landlord: Partial<User> & { id: string; name: string | null; email: string; image: string | null; phone?: string | null };
+  property: Property;
+  tenant: User;
+  landlord: User;
 }
 
 export interface MessageWithDetails extends Message {
-  sender: Partial<User> & { id: string; name: string | null; image: string | null; email?: string };
-  receiver: Partial<User> & { id: string; name: string | null; image: string | null; email?: string };
-  property?: Partial<Property> & { id: string; title: string; price?: any; images?: any };
+  sender: User;
+  receiver: User;
+  property?: Property;
 }
 
 export interface ReviewWithDetails extends Review {
@@ -62,10 +62,10 @@ export interface ReviewWithDetails extends Review {
 }
 
 export interface ComplaintWithDetails extends Complaint {
-  property?: Partial<Property> & { id: string; title: string; price?: any; images?: any } | null;
-  complainant: Partial<User> & { id: string; name: string | null; email: string; image: string | null; phone?: string | null };
-  respondent?: Partial<User> & { id: string; name: string | null; email: string; image: string | null; phone?: string | null } | null;
-  handler?: Partial<User> & { id: string; name: string | null } | null;
+  property?: Property;
+  complainant: User;
+  respondent?: User;
+  handler?: User;
 }
 
 export interface PropertyFilters {
@@ -199,10 +199,10 @@ export interface ApiResponse<T = any> {
 
 export interface Conversation {
   id: string;
-  participant: Partial<User> & { id: string; name: string | null; email: string; image: string | null; phone?: string | null };
+  participant: User;
   lastMessage?: Message;
   unreadCount: number;
-  property?: Partial<Property> & { id: string; title: string; price?: any; images?: any };
+  property?: Property;
 }
 
 export interface SearchSuggestion {

@@ -1,4 +1,3 @@
-
 import { redirect } from "next/navigation";
 import { getCurrentUser, requireAuth } from "@/lib/session";
 import { db } from "@/lib/prisma";
@@ -8,6 +7,7 @@ import ChatContainer from "@/components/ChatContainer";
 import { ArrowLeft, Home } from "lucide-react";
 import Link from "next/link";
 import type { MessageWithDetails, User } from "@/types";
+
 export const metadata = {
   title: "对话详情 - 城市租房平台",
 };
@@ -215,23 +215,132 @@ export default async function ConversationPage({
                         {property.title}
                       </p>
                       <p className="text-sm text-blue-600">
-                        ¥{Number(property.price)}/月
+                        ¥{property.price?.toNumber?.() || property.price}/月
                       </p>
                     </div>
                   </Link>
                 )}
               </div>
 
-              <ChatContainer
-                initialMessages={messages}
-                currentUserId={user.id}
+              <div
+                id="messages-container"
+                className="flex-1 overflow-y-auto p-4"
+              >
+                {messages.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center h-full">
+                    <MessageSquare className="w-16 h-16 text-gray-300 mb-4" />
+                    <p className="text-gray-500 text-center">
+                      还没有消息，开始聊天吧！
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-1">
+                    {messages.map((message, index) => {
+                      const isCurrentUser = message.senderId === user.id;
+                      const prevMessage = messages[index - 1];
+                      const showAvatar =
+                        !prevMessage ||
+                        prevMessage.senderId !== message.senderId;
+
+                      return (
+                        <MessageBubble
+                          key={message.id}
+                          message={message}
+                          isCurrentUser={isCurrentUser}
+                          showAvatar={showAvatar}
+                        />
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              <MessageInput
                 receiverId={otherUserId}
                 propertyId={actualPropertyId}
+                onMessageSent={() => {}}
               />
+            </div>
           </div>
         </div>
       </div>
     </div>
+  );
+}
+                  <div className="space-y-1">
+                    {messages.map((message, index) => {
+                      const isCurrentUser = message.senderId === user.id;
+                      const prevMessage = messages[index - 1];
+                      const showAvatar =
+                        !prevMessage ||
+                        prevMessage.senderId !== message.senderId;
+
+                      return (
+                        <MessageBubble
+                          key={message.id}
+                          message={message}
+                          isCurrentUser={isCurrentUser}
+                          showAvatar={showAvatar}
+                        />
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              <MessageInput
+                receiverId={otherUserId}
+                propertyId={actualPropertyId}
+                onMessageSent={() => {}}
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+                      const isCurrentUser = message.senderId === user.id;
+                      const prevMessage = messages[index - 1];
+                      const showAvatar =
+                        !prevMessage ||
+                        prevMessage.senderId !== message.senderId;
+
+                      return (
+                        <MessageBubble
+                          key={message.id}
+                          message={message}
+                          isCurrentUser={isCurrentUser}
+                          showAvatar={showAvatar}
+                        />
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              <MessageInput
+                receiverId={otherUserId}
+                propertyId={actualPropertyId}
+                onMessageSent={() => {}}
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <script
+        dangerouslySetInnerHTML={{
+          __html: `
+            (function() {
+              var container = document.querySelector('.overflow-y-auto.p-4');
+              if (container) {
+                container.scrollTop = container.scrollHeight;
+              }
+            })();
+          `,
+        }}
+      />
     </div>
   );
 }

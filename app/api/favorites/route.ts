@@ -3,51 +3,6 @@ import { db } from "@/lib/prisma";
 import { requireAuth } from "@/lib/session";
 import { PropertyStatus } from "@prisma/client";
 
-export async function GET() {
-  try {
-    const user = await requireAuth();
-
-    const favorites = await db.favorite.findMany({
-      where: { userId: user.id },
-      orderBy: { createdAt: "desc" },
-      include: {
-        property: {
-          include: {
-            landlord: {
-              select: {
-                id: true,
-                name: true,
-                image: true,
-              },
-            },
-            _count: {
-              select: {
-                bookings: true,
-                reviews: true,
-                favorites: true,
-              },
-            },
-          },
-        },
-      },
-    });
-
-    return NextResponse.json({
-      success: true,
-      data: favorites,
-    });
-  } catch (error) {
-    console.error("Error fetching favorites:", error);
-    return NextResponse.json(
-      {
-        success: false,
-        error: error instanceof Error ? error.message : "获取收藏列表失败",
-      },
-      { status: 500 }
-    );
-  }
-}
-
 export async function POST(request: Request) {
   try {
     const user = await requireAuth();
