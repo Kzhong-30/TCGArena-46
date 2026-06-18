@@ -17,7 +17,8 @@ export async function GET() {
       success: true,
       data: { count: unreadCount },
     });
-  } catch (error) {
+  } catch (error: any) {
+    return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
     console.error("获取未读消息数量失败:", error);
     return NextResponse.json(
       {

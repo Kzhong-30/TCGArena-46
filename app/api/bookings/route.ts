@@ -86,7 +86,8 @@ export async function GET(request: Request) {
       success: true,
       data: response,
     });
-  } catch (error) {
+  } catch (error: any) {
+    return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
     console.error("Error fetching bookings:", error);
     return NextResponse.json(
       {
@@ -223,7 +224,8 @@ export async function POST(request: Request) {
       data: processedBooking,
       message: "预约提交成功，等待房东确认",
     });
-  } catch (error) {
+  } catch (error: any) {
+    return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
     console.error("Error creating booking:", error);
     return NextResponse.json(
       {

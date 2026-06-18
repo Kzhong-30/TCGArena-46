@@ -168,7 +168,8 @@ export async function POST(request: Request) {
       data: processedReview,
       message: "评价提交成功",
     });
-  } catch (error) {
+  } catch (error: any) {
+    return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
     console.error("Error creating review:", error);
     return NextResponse.json(
       {

@@ -126,7 +126,8 @@ export async function GET(request: Request, { params }: { params: { id: string }
       success: true,
       data: result,
     });
-  } catch (error) {
+  } catch (error: any) {
+    return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
     console.error("Error fetching property:", error);
     return NextResponse.json(
       {
@@ -224,7 +225,8 @@ export async function PUT(request: Request, { params }: { params: { id: string }
       data: processedProperty,
       message: user.role === "ADMIN" ? "房源更新成功" : "房源更新成功，等待重新审核",
     });
-  } catch (error) {
+  } catch (error: any) {
+    return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
     console.error("Error updating property:", error);
     return NextResponse.json(
       {
@@ -274,7 +276,8 @@ export async function DELETE(request: Request, { params }: { params: { id: strin
       success: true,
       message: "房源删除成功",
     });
-  } catch (error) {
+  } catch (error: any) {
+    return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
     console.error("Error deleting property:", error);
     return NextResponse.json(
       {

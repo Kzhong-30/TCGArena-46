@@ -53,7 +53,8 @@ export async function POST(request: Request) {
       data: processedComplaint,
       message: "投诉提交成功，我们会尽快处理",
     });
-  } catch (error) {
+  } catch (error: any) {
+    return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
     console.error("Create complaint error:", error);
     return NextResponse.json(
       { success: false, message: "提交失败，请稍后重试" },
@@ -128,7 +129,8 @@ export async function GET(request: Request) {
       limit,
       totalPages: Math.ceil(total / limit),
     });
-  } catch (error) {
+  } catch (error: any) {
+    return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
     console.error("Get complaints error:", error);
     return NextResponse.json(
       { success: false, message: "获取失败，请稍后重试" },

@@ -68,7 +68,8 @@ export async function GET(request: Request) {
       success: true,
       data: conversations,
     });
-  } catch (error) {
+  } catch (error: any) {
+    return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
     console.error("Error fetching conversations:", error);
     return NextResponse.json(
       {

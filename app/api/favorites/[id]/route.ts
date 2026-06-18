@@ -43,7 +43,8 @@ export async function DELETE(request: Request, { params }: { params: { id: strin
       success: true,
       message: "取消收藏成功",
     });
-  } catch (error) {
+  } catch (error: any) {
+    return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
     console.error("Error removing favorite:", error);
     return NextResponse.json(
       {

@@ -59,7 +59,8 @@ export async function PUT(request: Request, { params }: { params: { id: string }
       data: updatedUser,
       message: updatedUser.isActive ? "用户已启用" : "用户已禁用",
     });
-  } catch (error) {
+  } catch (error: any) {
+    return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
     console.error("Error toggling user status:", error);
     return NextResponse.json(
       {

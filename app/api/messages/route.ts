@@ -98,7 +98,8 @@ export async function GET(request: Request) {
       success: true,
       data: response,
     });
-  } catch (error) {
+  } catch (error: any) {
+    return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
     console.error("Error fetching messages:", error);
     return NextResponse.json(
       {
@@ -201,7 +202,8 @@ export async function POST(request: Request) {
       data: processedMessage,
       message: "消息发送成功",
     });
-  } catch (error) {
+  } catch (error: any) {
+    return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
     console.error("Error sending message:", error);
     return NextResponse.json(
       {

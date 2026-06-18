@@ -157,7 +157,8 @@ export async function GET(request: Request) {
         hasPrevPage,
       },
     });
-  } catch (error) {
+  } catch (error: any) {
+    return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
     console.error("Error fetching properties:", error);
     return NextResponse.json(
       {
@@ -302,7 +303,8 @@ export async function POST(request: Request) {
       data: processedProperty,
       message: user.role === "ADMIN" ? "房源创建成功" : "房源发布成功，等待管理员审核",
     });
-  } catch (error) {
+  } catch (error: any) {
+    return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
     console.error("Error creating property:", error);
     return NextResponse.json(
       {

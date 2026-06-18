@@ -450,7 +450,8 @@ export async function POST(request: Request): Promise<NextResponse<ApiResponse>>
     };
 
     return NextResponse.json({ success: true, data });
-  } catch (error) {
+  } catch (error: any) {
+    return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
     console.error("Error in smart fill:", error);
 
     if (error instanceof Error && error.message.includes("redirect")) {

@@ -27,7 +27,8 @@ export async function GET() {
       success: true,
       data: userData,
     });
-  } catch (error) {
+  } catch (error: any) {
+    return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
     console.error("Error fetching user:", error);
     return NextResponse.json(
       {
@@ -82,7 +83,8 @@ export async function PATCH(request: Request) {
       data: updatedUser,
       message: "个人信息更新成功",
     });
-  } catch (error) {
+  } catch (error: any) {
+    return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
     console.error("Error updating user:", error);
     return NextResponse.json(
       {

@@ -181,7 +181,8 @@ export async function POST(req: Request): Promise<NextResponse<UploadApiResponse
       }
       throw processError;
     }
-  } catch (error) {
+  } catch (error: any) {
+    return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
     console.error("Error uploading files:", error);
 
     let errorMessage = "上传失败，请稍后重试";

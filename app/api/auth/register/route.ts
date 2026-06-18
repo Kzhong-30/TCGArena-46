@@ -59,7 +59,8 @@ export async function POST(request: Request) {
       data: user,
       message: "注册成功",
     });
-  } catch (error) {
+  } catch (error: any) {
+    return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
     console.error("Registration error:", error);
     return NextResponse.json(
       { success: false, message: "注册失败，请稍后重试" },

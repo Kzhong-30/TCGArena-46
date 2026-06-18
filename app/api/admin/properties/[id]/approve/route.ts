@@ -70,7 +70,8 @@ export async function PUT(request: Request, { params }: { params: { id: string }
       data: processedProperty,
       message: "房源审核通过",
     });
-  } catch (error) {
+  } catch (error: any) {
+    return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
     console.error("Error approving property:", error);
     return NextResponse.json(
       {

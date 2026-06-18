@@ -77,7 +77,8 @@ export async function PATCH(request: Request, { params }: { params: { id: string
       data: processedBooking,
       message: "预约已取消",
     });
-  } catch (error) {
+  } catch (error: any) {
+    return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
     console.error("Error cancelling booking:", error);
     return NextResponse.json(
       { success: false, error: error instanceof Error ? error.message : "取消预约失败" },

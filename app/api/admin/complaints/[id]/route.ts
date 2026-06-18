@@ -78,7 +78,8 @@ export async function PUT(request: Request, { params }: { params: { id: string }
       data: processedComplaint,
       message: messages[status as keyof typeof messages] || "投诉状态已更新",
     });
-  } catch (error) {
+  } catch (error: any) {
+    return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
     console.error("Error updating complaint:", error);
     return NextResponse.json(
       { success: false, error: error instanceof Error ? error.message : "处理投诉失败" },

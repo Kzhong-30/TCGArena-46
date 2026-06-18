@@ -100,7 +100,8 @@ export async function GET(request: NextRequest) {
     return new Response(transform.readable, {
       headers: SSE_HEADERS,
     });
-  } catch (error) {
+  } catch (error: any) {
+    return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
     console.error("SSE stream error:", error);
     return NextResponse.json(
       { success: false, error: error instanceof Error ? error.message : "连接失败" },

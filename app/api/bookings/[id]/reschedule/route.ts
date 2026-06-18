@@ -106,7 +106,8 @@ export async function PUT(request: Request, { params }: { params: { id: string }
       data: processedBooking,
       message: "预约改期成功",
     });
-  } catch (error) {
+  } catch (error: any) {
+    return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
     console.error("Error rescheduling booking:", error);
     return NextResponse.json(
       {

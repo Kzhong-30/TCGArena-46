@@ -115,7 +115,8 @@ export async function POST(request: Request) {
       data: processedFavorite,
       message: "收藏成功",
     });
-  } catch (error) {
+  } catch (error: any) {
+    return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
     console.error("Error adding favorite:", error);
     return NextResponse.json(
       {
