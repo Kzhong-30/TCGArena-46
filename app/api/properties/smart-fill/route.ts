@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { requireRole } from "@/lib/session";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth-options";
 import type { PropertyType, UserRole } from "@/types";
 
 
@@ -387,7 +388,22 @@ function getSuggestedOrientation(city: string, area: number): string {
 
 export async function POST(request: Request): Promise<NextResponse<ApiResponse>> {
   try {
-    const user = await requireRole(["LANDLORD" as UserRole, "ADMIN" as UserRole]);
+    const session = await getServerSession(authOptions);
+    const user = session?.user ?? null;
+
+    if (!user) {
+      return NextResponse.json(
+        { success: false, error: "未授权访问" },
+        { status: 401 }
+      );
+    }
+
+    if (user.role !== "LANDLORD" && user.role !== "ADMIN") {
+      return NextResponse.json(
+        { success: false, error: "权限不足" },
+        { status: 403 }
+      );
+    }
 
     const body = (await request.json()) as SmartFillRequestBody;
 
