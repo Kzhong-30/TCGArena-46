@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireAuth } from "@/lib/session";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth-options";
 import { realtime } from "@/lib/realtime";
 import type { MessageNewEventPayload, MessageReadEventPayload, BookingStatusEventPayload } from "@/lib/realtime";
 
@@ -23,7 +24,16 @@ function formatSSE(event: string, data: unknown): Uint8Array {
 
 export async function GET(request: NextRequest) {
   try {
-    const user = await requireAuth();
+    const session = await getServerSession(authOptions);
+    const user = session?.user ?? null;
+    
+    if (!user) {
+      return NextResponse.json(
+        { success: false, error: "未授权访问" },
+        { status: 401 }
+      );
+    }
+    
     const userId = user.id;
 
     const transform = new TransformStream();

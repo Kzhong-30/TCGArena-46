@@ -35,3 +35,12 @@ next-env.d.ts
 
 # prisma
 prisma/migrations/**/migration_lock.toml
+
+# e2e test results
+/test-results/
+/playwright-report/
+
+# temp test scripts
+test_*.py
+fix_*.py
+

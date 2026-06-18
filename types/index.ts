@@ -397,3 +397,59 @@ export interface MapMarker {
   lng: number;
   property: Property;
 }
+export interface SmartFillRequest { city?: string; district?: string; propertyType?: PropertyType; bedrooms?: number; bathrooms?: number; area?: number; address?: string; orientation?: string; furnished?: boolean; }
+export interface SmartFillSuggestedAmenities { hasParking: boolean; hasElevator: boolean; hasBalcony: boolean; hasGarden: boolean; hasPool: boolean; hasGym: boolean; petsAllowed: boolean; smokingAllowed: boolean; }
+export interface SmartFillSuggestedPriceRange { min: number; max: number; avg: number; unit?: string; }
+export interface SmartFillResponseData { suggestedTitles: string[]; suggestedDescription: string; suggestedPriceRange: SmartFillSuggestedPriceRange; suggestedRentRange?: SmartFillSuggestedPriceRange; suggestedDeposit: number; suggestedAmenities: SmartFillSuggestedAmenities; suggestedMinimumStay: number; suggestedOrientation: string; }
+export interface SmartFillResponse { success: boolean; data: SmartFillResponseData; message?: string; processingTime?: number; error?: string; }
+export type SmartFillFieldName = "title" | "description" | "price" | "deposit" | "amenities" | "orientation" | "minimumStay";
+export interface SmartFillField<T = any> {
+  suggestedValue?: T;
+  originalValue?: T;
+  confidence: number;
+  source?: string;
+  reason?: string;
+}
+export interface MessageNewEventPayload { message: MessageWithDetails; timestamp: number; }
+export interface MessageReadEventPayload { messageIds: string[]; readerId: string; conversationPartnerId: string; timestamp: number; }
+export interface HeartbeatEventPayload { timestamp: number; }
+
+export interface SSEConnectionStatus {
+  isConnected: boolean;
+  isConnecting: boolean;
+  error?: string;
+  lastConnectedAt?: number;
+}
+
+export type SSEEventType = "NEW_MESSAGE" | "MESSAGE_READ" | "HEARTBEAT";
+
+export interface NewMessageEventData {
+  message: MessageWithDetails;
+}
+
+export interface MessageReadEventData {
+  messageIds: string[];
+  readerId: string;
+  conversationPartnerId: string;
+}
+
+export interface UploadConfig {
+  maxFileSize: number;
+  maxFiles: number;
+  allowedTypes: string[];
+  uploadDir: string;
+}
+
+export interface UploadedFile {
+  filename: string;
+  originalName: string;
+  size: number;
+  mimetype: string;
+  url: string;
+  filepath: string;
+}
+
+export interface FileValidationError {
+  field: string;
+  message: string;
+}

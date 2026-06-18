@@ -139,15 +139,17 @@ function formatSuggestionValue(
   return String(value);
 }
 
-function getConfidenceColor(confidence: number): string {
-  if (confidence >= 0.8) return "text-green-600";
-  if (confidence >= 0.6) return "text-amber-600";
+function getConfidenceColor(confidence: number | undefined): string {
+  const c = confidence ?? 0.7;
+  if (c >= 0.8) return "text-green-600";
+  if (c >= 0.6) return "text-amber-600";
   return "text-gray-600";
 }
 
-function getConfidenceLabel(confidence: number): string {
-  if (confidence >= 0.8) return "高";
-  if (confidence >= 0.6) return "中";
+function getConfidenceLabel(confidence: number | undefined): string {
+  const c = confidence ?? 0.7;
+  if (c >= 0.8) return "高";
+  if (c >= 0.6) return "中";
   return "低";
 }
 
@@ -232,7 +234,7 @@ export default function SmartFillButton({
     for (const field of selectedFields) {
       const suggestion = suggestions[field as keyof typeof suggestions];
       if (suggestion && (stepFields.length === 0 || stepFields.includes(field))) {
-        const fieldSuggestion = suggestion as SmartFillField<FieldValueType>;
+        const fieldSuggestion = suggestion as unknown as SmartFillField<FieldValueType>;
         onApply(field, fieldSuggestion.suggestedValue ?? null);
         appliedCount++;
       }
@@ -329,7 +331,7 @@ export default function SmartFillButton({
 
             <div className="space-y-3">
               {displayFields.map(([field, suggestion]) => {
-                const fieldSuggestion = suggestion as SmartFillField<FieldValueType>;
+                const fieldSuggestion = suggestion as unknown as SmartFillField<FieldValueType>;
                 const isSelected = selectedFields.has(field);
                 const label = FIELD_LABELS[field] || field;
 
